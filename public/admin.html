@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LTRIX | Admin Control Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Toast Animations */
+        .toast-anim-enter {
+            animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .toast-anim-leave {
+            animation: slideOut 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        /* Modal Animations */
+        .modal-anim-enter {
+            animation: modalIn 0.2s ease-out forwards;
+        }
+
+        @keyframes modalIn {
+            from {
+                transform: scale(0.95);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased overflow-x-hidden">
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-[9999] flex flex-col gap-3 pointer-events-none"></div>
+
+    <!-- Custom Confirm Modal -->
+    <div id="custom-confirm-modal"
+        class="fixed inset-0 z-[10000] hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div
+            class="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden modal-anim-enter">
+            <div class="p-5 border-b border-slate-800 bg-slate-800/50">
+                <h3 id="confirm-title" class="text-lg font-bold text-white">Confirm Action</h3>
+            </div>
+            <div class="p-5 text-sm text-slate-300" id="confirm-message">
+                Are you sure you want to proceed?
+            </div>
+            <div class="p-4 bg-slate-900 border-t border-slate-800 flex justify-end gap-3">
+                <button id="confirm-btn-cancel"
+                    class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-sm transition-colors">Cancel</button>
+                <button id="confirm-btn-ok"
+                    class="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold text-sm transition-colors">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Prompt Modal -->
+    <div id="custom-prompt-modal"
+        class="fixed inset-0 z-[10000] hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div
+            class="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden modal-anim-enter">
+            <div class="p-5 border-b border-slate-800 bg-slate-800/50">
+                <h3 id="prompt-title" class="text-lg font-bold text-white">Input Required</h3>
+            </div>
+            <div class="p-5 space-y-3">
+                <p id="prompt-message" class="text-sm text-slate-300"></p>
+                <input type="text" id="prompt-input"
+                    class="w-full p-3 rounded-lg bg-slate-950 border border-slate-700 text-white focus:outline-none focus:border-emerald-500 text-sm" />
+            </div>
+            <div class="p-4 bg-slate-900 border-t border-slate-800 flex justify-end gap-3">
+                <button id="prompt-btn-cancel"
+                    class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-sm transition-colors">Cancel</button>
+                <button id="prompt-btn-ok"
+                    class="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold text-sm transition-colors">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- ADMIN LOGIN SCREEN                         -->
+    <!-- ========================================== -->
+    <div id="auth-screen"
+        class="max-w-md mx-auto mt-24 p-8 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl">
+        <div class="text-center mb-8">
+            <span class="text-4xl">🛡️</span>
+            <h1 class="text-2xl font-extrabold tracking-wider text-emerald-400 mt-2">LTRIX Admin</h1>
+            <p class="text-xs text-slate-400 mt-1">Restricted Access Control Center</p>
+        </div>
+
+        <form id="auth-form" onsubmit="handleAdminLogin(event)" class="space-y-5">
+            <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Admin Identifier (Phone/ID/Email)</label>
+                <input type="text" id="admin-identifier" required placeholder="Enter admin ID"
+                    class="w-full p-3 rounded-lg bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:outline-none" />
+            </div>
+            <div>
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Password</label>
+                <input type="password" id="admin-password" required placeholder="••••••••••"
+                    class="w-full p-3 rounded-lg bg-slate-950 border border-slate-700 focus:border-emerald-500 focus:outline-none" />
+            </div>
+            <button type="submit" id="login-btn"
+                class="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold rounded-lg transition-colors">
+                Secure Login
+            </button>
+        </form>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- ADMIN DASHBOARD                            -->
+    <!-- ========================================== -->
+    <div id="admin-app" class="hidden max-w-7xl mx-auto p-4 md:p-8 space-y-6">
+        <header
+            class="flex flex-wrap justify-between items-center bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-md">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">🛡️</span>
+                <div>
+                    <h1 class="text-xl font-extrabold text-white">LTRIX Admin Portal</h1>
+                    <p class="text-xs text-emerald-400" id="admin-role-display">System Online & Synced</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="/"
+                    class="px-4 py-2 bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 rounded-lg text-sm font-bold transition-colors">
+                    🏠 Main Portal
+                </a>
+                <button onclick="adminLogout()"
+                    class="px-4 py-2 bg-rose-600/20 text-rose-400 border border-rose-600/30 hover:bg-rose-600/30 rounded-lg text-sm font-bold transition-colors">
+                    Logout
+                </button>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left Column: Settings & Hot Window -->
+            <div class="space-y-6">
+                <!-- Payment Settings -->
+                <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 space-y-4">
+                    <h2 class="text-lg font-bold text-emerald-400 border-b border-slate-800 pb-2">💳 Payment
+                        Configurations</h2>
+                    <form id="settings-form" onsubmit="savePaymentSettings(event)" class="space-y-4 text-xs">
+                        <div>
+                            <label class="block text-slate-400 mb-1">USDT (BEP20) Status</label>
+                            <select id="set-usdt-enabled"
+                                class="w-full p-2.5 rounded bg-slate-950 border border-slate-700 text-white focus:outline-none">
+                                <option value="true">ENABLED</option>
+                                <option value="false">DISABLED</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-slate-400 mb-1">Platform USDT BEP20 Address</label>
+                            <input type="text" id="set-usdt-address"
+                                class="w-full p-2.5 rounded bg-slate-950 border border-slate-700 text-white font-mono focus:outline-none" />
+                        </div>
+                        <div>
+                            <label class="block text-slate-400 mb-1">Required Confirmations</label>
+                            <input type="number" id="set-usdt-conf"
+                                class="w-full p-2.5 rounded bg-slate-950 border border-slate-700 text-white focus:outline-none" />
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-slate-400 mb-1">NGN Status</label>
+                                <select id="set-ngn-enabled"
+                                    class="w-full p-2.5 rounded bg-slate-950 border border-slate-700 text-white focus:outline-none">
+                                    <option value="true">ENABLED</option>
+                                    <option value="false">DISABLED</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-slate-400 mb-1">NGN Rate (per $1)</label>
+                                <input type="number" id="set-ngn-rate"
+                                    class="w-full p-2.5 rounded bg-slate-950 border border-slate-700 text-white focus:outline-none" />
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-slate-400 mb-1">Bank Instructions (Global Note)</label>
+                            <input type="text" id="set-ngn-instructions"
+                                class="w-full p-2.5 rounded bg-slate-950 border border-slate-700 text-white focus:outline-none" />
+                        </div>
+
+                        <div class="pt-2 border-t border-slate-800">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-slate-400 font-bold">Naira Bank Accounts
+                                    (Auto-Rotation)</label>
+                                <button type="button" onclick="addBankAccountRow()"
+                                    class="px-2 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded text-[10px] hover:bg-emerald-500/30 transition-colors">+
+                                    Add Bank</button>
+                            </div>
+                            <div id="admin-bank-accounts-container" class="space-y-2 max-h-64 overflow-y-auto pr-1">
+                                <!-- Dynamic rows injected here -->
+                            </div>
+                        </div>
+
+                        <button type="submit"
+                            class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold rounded transition-colors">Save
+                            Settings</button>
+                    </form>
+                </div>
+
+                <!-- Hot Window Control -->
+                <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 space-y-4">
+                    <h2 class="text-lg font-bold text-orange-400 border-b border-slate-800 pb-2">🔥 Hot Window Override
+                    </h2>
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-slate-300">Force Hot Window Open:</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="hot-force-toggle" class="sr-only peer"
+                                onchange="toggleHotWindow(this.checked)">
+                            <div
+                                class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500">
+                            </div>
+                        </label>
+                    </div>
+                    <button onclick="resetHotSlots()"
+                        class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-orange-400 border border-slate-700 text-xs font-bold rounded transition-colors">
+                        Reset All Hot Plan Slots
+                    </button>
+                    <div
+                        class="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-800">
+                        <span>Promo Budget: <strong id="promo-budget-display"
+                                class="text-emerald-400">$0.00</strong></span>
+                        <button type="button" onclick="editPromoBudget()"
+                            class="px-2.5 py-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30 rounded text-[10px] font-bold transition-colors">
+                            Edit Budget
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Manual Credit & Management -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Manual Credit -->
+                <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 space-y-4">
+                    <h2 class="text-lg font-bold text-sky-400 border-b border-slate-800 pb-2">💸 Manual Deposit Credit
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Search User (Email/Username/ID)</label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="search-user-input"
+                                        class="flex-1 p-2 rounded bg-slate-950 border border-slate-700 text-sm focus:outline-none focus:border-sky-500"
+                                        placeholder="Enter identifier..." />
+                                    <button onclick="searchUser()"
+                                        class="px-3 bg-sky-500 text-slate-950 font-bold rounded text-xs hover:bg-sky-600 transition-colors">Search</button>
+                                </div>
+                            </div>
+                            <div id="user-search-results" class="space-y-2 max-h-32 overflow-y-auto"></div>
+                        </div>
+                        <form onsubmit="submitManualCredit(event)" class="space-y-3">
+                            <input type="hidden" id="credit-user-id" />
+                            <div class="p-3 bg-slate-950 rounded border border-slate-800 text-xs">
+                                <p class="text-slate-400">Selected User: <strong id="selected-user-display"
+                                        class="text-white">None</strong></p>
+                                <p class="text-slate-400 mt-1">Current Balance: <strong id="selected-user-balance"
+                                        class="text-emerald-400">$0.00</strong></p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">Amount Received</label>
+                                    <input type="number" id="credit-amount" step="0.01" required
+                                        class="w-full p-2 rounded bg-slate-950 border border-slate-700 text-sm focus:outline-none" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">Currency</label>
+                                    <select id="credit-currency"
+                                        class="w-full p-2 rounded bg-slate-950 border border-slate-700 text-sm focus:outline-none">
+                                        <option value="USDT">USDT (Crypto)</option>
+                                        <option value="NGN">NGN (Bank)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">TXID / Reference</label>
+                                <input type="text" id="credit-txid"
+                                    class="w-full p-2 rounded bg-slate-950 border border-slate-700 text-sm focus:outline-none"
+                                    placeholder="Auto-generated if empty" />
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Audit Note (Mandatory)</label>
+                                <input type="text" id="credit-note" required
+                                    class="w-full p-2 rounded bg-slate-950 border border-slate-700 text-sm focus:outline-none"
+                                    placeholder="Reason for manual credit..." />
+                            </div>
+                            <button type="submit"
+                                class="w-full py-2 bg-sky-500 hover:bg-sky-600 text-slate-950 font-bold rounded text-sm transition-colors">Credit
+                                User Wallet</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Pending Deposits -->
+                <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 space-y-4">
+                    <h2 class="text-lg font-bold text-amber-400 border-b border-slate-800 pb-2">⏳ Pending Deposits (NGN
+                        / USDT)</h2>
+                    <div id="pending-deposits-list" class="space-y-3 max-h-72 overflow-y-auto pr-1 text-xs"></div>
+                </div>
+
+                <!-- Pending Withdrawals -->
+                <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 space-y-4">
+                    <h2 class="text-lg font-bold text-rose-400 border-b border-slate-800 pb-2">🏦 Pending Withdrawals
+                        (USDT BEP20)</h2>
+                    <div id="pending-withdrawals-list" class="space-y-3 max-h-72 overflow-y-auto pr-1 text-xs"></div>
+                </div>
+
+                <!-- Support Tickets -->
+                <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 space-y-4">
+                    <h2 class="text-lg font-bold text-purple-400 border-b border-slate-800 pb-2">🎧 Open Support Tickets
+                    </h2>
+                    <div id="admin-tickets-list" class="space-y-3 max-h-72 overflow-y-auto pr-1 text-xs"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Individual Package Management -->
+        <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 space-y-4">
+            <h2 class="text-lg font-bold text-indigo-400 border-b border-slate-800 pb-2">📦 Individual Package
+                Management</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Standard Packages -->
+                <div>
+                    <h3 class="text-sm font-bold text-emerald-400 mb-3 flex items-center gap-2">
+                        <span>💎</span> Standard Packages
+                    </h3>
+                    <div id="admin-standard-packages-list" class="space-y-3 text-xs"></div>
+                </div>
+                <!-- Hot Packages -->
+                <div>
+                    <h3 class="text-sm font-bold text-orange-400 mb-3 flex items-center gap-2">
+                        <span>🔥</span> Hot Packages (Sunday Deals)
+                    </h3>
+                    <div id="admin-hot-packages-list" class="space-y-3 text-xs"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Management Section -->
+        <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                <h2 class="text-lg font-bold text-teal-400">👥 User Management</h2>
+                <span id="user-pagination-info" class="text-xs text-slate-400"></span>
+            </div>
+            <div id="admin-users-list" class="space-y-3 max-h-96 overflow-y-auto pr-1 text-xs"></div>
+            <div id="user-pagination-controls" class="flex justify-between items-center pt-2">
+                <button id="btn-prev-user-page" onclick="changeUserPage(-1)"
+                    class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs disabled:opacity-50 disabled:cursor-not-allowed transition-colors">Previous</button>
+                <span id="user-page-numbers" class="text-xs text-slate-400 flex gap-1"></span>
+                <button id="btn-next-user-page" onclick="changeUserPage(1)"
+                    class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs disabled:opacity-50 disabled:cursor-not-allowed transition-colors">Next</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- JS LOGIC & CUSTOM NOTIFICATIONS            -->
+    <!-- ========================================== -->
+    <script>
+        let adminToken = localStorage.getItem('ltrix_admin_token') || localStorage.getItem('ltrix_token');
+        let adminRole = localStorage.getItem('ltrix_admin_role') || localStorage.getItem('ltrix_role');
+        let activeUserId = null;
+        let globalUsersList = [];
+        let currentUserPage = 1;
+        const USERS_PER_PAGE = 5;
+
+        // === CUSTOM NOTIFICATION SYSTEM ===
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+
+            let bgColor, borderColor, textColor, icon;
+            switch (type) {
+                case 'success': bgColor = 'bg-emerald-950/95'; borderColor = 'border-emerald-500/50'; textColor = 'text-emerald-100'; icon = '✅'; break;
+                case 'error': bgColor = 'bg-rose-950/95'; borderColor = 'border-rose-500/50'; textColor = 'text-rose-100'; icon = '❌'; break;
+                case 'warning': bgColor = 'bg-amber-950/95'; borderColor = 'border-amber-500/50'; textColor = 'text-amber-100'; icon = '⚠️'; break;
+                default: bgColor = 'bg-slate-900/95'; borderColor = 'border-slate-700'; textColor = 'text-slate-100'; icon = 'ℹ️';
+            }
+
+            toast.className = `pointer-events-auto flex items-start gap-3 p-4 rounded-xl shadow-2xl border ${bgColor} ${borderColor} ${textColor} w-80 max-w-[calc(100vw-2rem)] backdrop-blur-md toast-anim-enter`;
+            toast.innerHTML = `
+                <span class="text-lg shrink-0">${icon}</span>
+                <div class="flex-1 leading-snug break-words text-sm font-medium">${message}</div>
+                <button class="text-slate-400 hover:text-white shrink-0 mt-0.5 transition-colors" onclick="this.parentElement.remove()">✕</button>
+            `;
+
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.remove('toast-anim-enter');
+                toast.classList.add('toast-anim-leave');
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+
+        function customConfirm(title, messageHtml) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('custom-confirm-modal');
+                const btnOk = document.getElementById('confirm-btn-ok');
+                const btnCancel = document.getElementById('confirm-btn-cancel');
+
+                document.getElementById('confirm-title').innerText = title;
+                document.getElementById('confirm-message').innerHTML = messageHtml;
+
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+
+                // Clone buttons to remove old event listeners
+                const newBtnOk = btnOk.cloneNode(true);
+                const newBtnCancel = btnCancel.cloneNode(true);
+                btnOk.parentNode.replaceChild(newBtnOk, btnOk);
+                btnCancel.parentNode.replaceChild(newBtnCancel, btnCancel);
+
+                newBtnOk.onclick = () => { modal.classList.add('hidden'); modal.classList.remove('flex'); resolve(true); };
+                newBtnCancel.onclick = () => { modal.classList.add('hidden'); modal.classList.remove('flex'); resolve(false); };
+            });
+        }
+
+        function customPrompt(title, message, isPassword = false) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('custom-prompt-modal');
+                const btnOk = document.getElementById('prompt-btn-ok');
+                const btnCancel = document.getElementById('prompt-btn-cancel');
+                const input = document.getElementById('prompt-input');
+
+                document.getElementById('prompt-title').innerText = title;
+                document.getElementById('prompt-message').innerText = message;
+                input.value = '';
+                input.type = isPassword ? 'password' : 'text';
+
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                input.focus();
+
+                const newBtnOk = btnOk.cloneNode(true);
+                const newBtnCancel = btnCancel.cloneNode(true);
+                btnOk.parentNode.replaceChild(newBtnOk, btnOk);
+                btnCancel.parentNode.replaceChild(newBtnCancel, btnCancel);
+
+                newBtnOk.onclick = () => { modal.classList.add('hidden'); modal.classList.remove('flex'); resolve(input.value); };
+                newBtnCancel.onclick = () => { modal.classList.add('hidden'); modal.classList.remove('flex'); resolve(null); };
+            });
+        }
+
+        // === API HELPER ===
+        async function apiCall(endpoint, method = 'GET', body = null) {
+            const headers = { 'Content-Type': 'application/json' };
+            if (adminToken) headers['Authorization'] = `Bearer ${adminToken}`;
+
+            const config = { method, headers };
+            if (body) config.body = JSON.stringify(body);
+
+            const res = await fetch(endpoint, config);
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Request failed');
+            return data;
+        }
+
+        // === AUTHENTICATION ===
+        if (adminToken && (adminRole === 'ADMIN' || adminRole === 'SUPERADMIN' || !adminRole)) {
+            showAdminApp();
+        }
+
+        async function handleAdminLogin(e) {
+            e.preventDefault();
+            const identifier = document.getElementById('admin-identifier').value.trim();
+            const password = document.getElementById('admin-password').value;
+            const btn = document.getElementById('login-btn');
+
+            btn.disabled = true; btn.innerHTML = 'Authenticating...';
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ identifier, password })
+                });
+                const data = await res.json();
+
+                if (!res.ok) throw new Error(data.error || 'Login failed');
+                if (data.role !== 'ADMIN' && data.role !== 'SUPERADMIN') {
+                    throw new Error('Access denied. Admin credentials required.');
+                }
+
+                localStorage.setItem('ltrix_admin_token', data.token);
+                localStorage.setItem('ltrix_admin_role', data.role);
+                localStorage.setItem('ltrix_token', data.token);
+                localStorage.setItem('ltrix_role', data.role);
+                adminToken = data.token;
+                adminRole = data.role;
+
+                showToast('Admin access granted.', 'success');
+                showAdminApp();
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                btn.disabled = false; btn.innerHTML = 'Secure Login';
+            }
+        }
+
+        function adminLogout() {
+            localStorage.removeItem('ltrix_admin_token');
+            localStorage.removeItem('ltrix_admin_role');
+            localStorage.removeItem('ltrix_token');
+            localStorage.removeItem('ltrix_role');
+            adminToken = null;
+            adminRole = null;
+            document.getElementById('admin-app').classList.add('hidden');
+            document.getElementById('auth-screen').classList.remove('hidden');
+            showToast('Logged out securely.', 'info');
+        }
+
+        function showAdminApp() {
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('admin-app').classList.remove('hidden');
+            if (adminRole) {
+                document.getElementById('admin-role-display').innerText = adminRole === 'SUPERADMIN' ? 'Super Admin Access Granted' : 'Admin Access Granted';
+            }
+            loadAdminData();
+        }
+
+        // === DATA LOADING ===
+        async function loadAdminData() {
+            try {
+                const data = await apiCall('/api/admin/overview');
+
+                // Populate Payment Settings
+                document.getElementById('set-usdt-enabled').value = data.settings.usdtEnabled.toString();
+                document.getElementById('set-usdt-address').value = data.settings.usdtBep20Address;
+                document.getElementById('set-usdt-conf').value = data.settings.usdtConfirmations;
+                document.getElementById('set-ngn-enabled').value = data.settings.nairaDepositEnabled.toString();
+                document.getElementById('set-ngn-rate').value = data.settings.nairaExchangeRate;
+                document.getElementById('set-ngn-instructions').value = data.settings.nairaBankInstructions || '';
+
+                renderAdminBankAccounts(data.settings.nairaBankAccounts || []);
+
+                // Hot Window
+                document.getElementById('hot-force-toggle').checked = data.hotWindow.forceHotWindowOpen;
+                document.getElementById('promo-budget-display').innerText = `$${data.transparency?.verifiedPromotionalBudget?.toFixed(2) || data.settings.verifiedPromotionalBudget.toFixed(2)}`;
+
+                // Pending Deposits
+                document.getElementById('pending-deposits-list').innerHTML = data.deposits.filter(d => ['PENDING', 'PROCESSING'].includes(d.status)).map(d => `
+                    <div class="bg-slate-950 p-3 rounded border border-slate-800 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                        <div>
+                            <p class="font-bold text-white">${d.userId?.username || 'Unknown'} <span class="text-[10px] text-slate-500">(${d.reference})</span></p>
+                            <p class="text-slate-400 mt-0.5">${d.description}</p>
+                            <p class="text-amber-400 mt-1">Requested: $${d.amount.toFixed(2)} USD</p>
+                        </div>
+                        <div class="flex flex-row sm:flex-col gap-1.5 shrink-0">
+                            <button onclick="processDeposit('${d._id}', 'APPROVE')" class="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold rounded">Approve</button>
+                            <button onclick="processDeposit('${d._id}', 'REJECT')" class="px-3 py-1 bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30 font-bold rounded">Reject</button>
+                        </div>
+                    </div>
+                `).join('') || '<p class="text-slate-500 text-center py-2">No pending deposits.</p>';
+
+                // Pending Withdrawals
+                document.getElementById('pending-withdrawals-list').innerHTML = data.pendingWithdrawals.map(w => `
+                    <div class="bg-slate-950 p-3 rounded border border-slate-800 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                        <div>
+                            <p class="font-bold text-white">${w.userId?.username || 'Unknown'} <span class="text-[10px] text-slate-500">(${w.reference})</span></p>
+                            <p class="text-slate-400 mt-0.5 text-[11px] break-all">To: ${w.withdrawalAddress || w.userId?.usdtWithdrawalAddress || 'N/A'}</p>
+                            <p class="text-white mt-1 font-mono text-xs">Amt: $${w.amount.toFixed(2)} | Net: ${(w.amount - w.fee).toFixed(2)} USDT</p>
+                        </div>
+                        <div class="flex flex-row sm:flex-col gap-1.5 shrink-0">
+                            <button onclick="processWithdrawal('${w._id}', 'APPROVE')" class="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold rounded">Approve</button>
+                            <button onclick="processWithdrawal('${w._id}', 'REJECT')" class="px-3 py-1 bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30 font-bold rounded">Reject</button>
+                        </div>
+                    </div>
+                `).join('') || '<p class="text-slate-500 text-center py-2">No pending withdrawals.</p>';
+
+                // Tickets
+                document.getElementById('admin-tickets-list').innerHTML = data.tickets.filter(t => t.status === 'OPEN').map(t => `
+                    <div class="bg-slate-950 p-3 rounded border border-slate-800 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                        <div>
+                            <p class="font-bold text-white">${t.subject} <span class="text-[10px] text-slate-500">(${t.ticketRef})</span></p>
+                            <p class="text-slate-400 mt-0.5">${t.message}</p>
+                            <p class="text-slate-500 mt-1 text-[10px]">${new Date(t.createdAt).toLocaleString()}</p>
+                        </div>
+                        <button onclick="replyTicket('${t._id}', '${t.ticketRef}')" class="px-3 py-1 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded shrink-0">Reply</button>
+                    </div>
+                `).join('') || '<p class="text-slate-500 text-center py-2">No open tickets.</p>';
+
+                // Render Standard Packages
+                document.getElementById('admin-standard-packages-list').innerHTML = data.standardPlans.map(p => `
+                    <div class="bg-slate-950 p-3 rounded border border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                        <div>
+                            <p class="font-bold text-white text-xs">$${p.price} Package</p>
+                            <p class="text-slate-400 text-[11px]">Daily: $${p.dailyIncome} | ${p.durationDays} Days</p>
+                            <p class="text-amber-400 mt-1 text-[10px]">Limit: ${p.purchaseLimit} per user</p>
+                        </div>
+                        <div class="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                            <span class="${p.isLocked ? 'text-rose-400 font-bold' : 'text-emerald-400 font-bold'} text-xs">${p.isLocked ? 'Locked' : 'Unlocked'}</span>
+                            <div class="flex gap-1">
+                                <button onclick="togglePackageLock('${p._id}', ${p.isLocked})" class="px-2.5 py-1.5 ${p.isLocked ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30'} rounded text-[10px] font-bold transition-colors">
+                                    ${p.isLocked ? 'Unlock' : 'Lock'}
+                                </button>
+                                <button onclick="editPackageLimit('${p._id}', ${p.purchaseLimit})" class="px-2.5 py-1.5 bg-slate-800 text-slate-300 hover:bg-slate-700 rounded text-[10px] border border-slate-700 transition-colors">Edit Limit</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Render Hot Packages
+                document.getElementById('admin-hot-packages-list').innerHTML = data.hotPlans.map(p => `
+                    <div class="bg-slate-950 p-3 rounded border border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                        <div>
+                            <p class="font-bold text-white text-xs">$${p.price} Package</p>
+                            <p class="text-slate-400 text-[11px]">Daily: $${p.dailyIncome} | ${p.durationDays} Days</p>
+                            <p class="text-amber-400 mt-1 text-[10px]">Limit: ${p.purchaseLimit} per user</p>
+                            <p class="text-sky-400 mt-0.5 text-[10px]">Slots: ${p.slotsClaimed} / ${p.totalSlots}</p>
+                        </div>
+                        <div class="flex flex-col gap-1.5 w-full sm:w-auto">
+                            <div class="flex items-center justify-between sm:justify-end gap-2">
+                                <span class="${p.isLocked ? 'text-rose-400 font-bold' : 'text-emerald-400 font-bold'} text-xs">${p.isLocked ? 'Locked' : 'Unlocked'}</span>
+                                <button onclick="togglePackageLock('${p._id}', ${p.isLocked})" class="px-2.5 py-1 ${p.isLocked ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30'} rounded text-[10px] font-bold transition-colors">
+                                    ${p.isLocked ? 'Unlock' : 'Lock'}
+                                </button>
+                            </div>
+                            <div class="flex gap-1 mt-1">
+                                <button onclick="editHotPackage('${p._id}', ${p.purchaseLimit}, ${p.totalSlots})" class="flex-1 px-2 py-1 bg-slate-800 text-slate-300 hover:bg-slate-700 rounded text-[10px] border border-slate-700 transition-colors">Edit</button>
+                                <button onclick="resetPackageSlots('${p._id}')" class="flex-1 px-2 py-1 bg-orange-500/20 text-orange-300 border border-orange-500/30 hover:bg-orange-500/30 rounded text-[10px] transition-colors">Reset Slots</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Render Users
+                globalUsersList = data.users || [];
+                renderUsersList();
+
+            } catch (err) {
+                showToast(err.message, 'error');
+                if (err.message.includes('token') || err.message.includes('authentication') || err.message.includes('denied')) {
+                    adminLogout();
+                }
+            }
+        }
+
+        function renderUsersList() {
+            const currentAdminRole = adminRole || localStorage.getItem('ltrix_admin_role') || localStorage.getItem('ltrix_role');
+            const totalUsers = globalUsersList.length;
+            const totalPages = Math.ceil(totalUsers / USERS_PER_PAGE) || 1;
+
+            if (currentUserPage > totalPages) currentUserPage = totalPages;
+            if (currentUserPage < 1) currentUserPage = 1;
+
+            const startIndex = (currentUserPage - 1) * USERS_PER_PAGE;
+            const endIndex = Math.min(startIndex + USERS_PER_PAGE, totalUsers);
+            const paginatedUsers = globalUsersList.slice(startIndex, endIndex);
+
+            const listContainer = document.getElementById('admin-users-list');
+            if (!listContainer) return;
+
+            listContainer.innerHTML = paginatedUsers.map(u => {
+                const isSuper = u.role === 'SUPERADMIN';
+                return `
+                    <div class="bg-slate-950 p-3 rounded border border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                        <div>
+                            <p class="font-bold text-white text-xs">${u.username} <span class="text-[10px] text-slate-500">(${u.email}) • Bal: $${(u.availableBalance || 0).toFixed(2)}</span></p>
+                            <p class="text-[10px] mt-0.5">Role: <strong class="${isSuper ? 'text-purple-400' : (u.role === 'ADMIN' ? 'text-emerald-400' : 'text-slate-300')}">${u.role}</strong></p>
+                            <p class="text-[10px]">Status: <strong class="${u.status === 'ACTIVE' ? 'text-emerald-400' : (u.status === 'SUSPENDED' ? 'text-amber-400' : 'text-rose-400')}">${u.status === 'LOCKED' ? 'LOCKED (W/D)' : u.status}</strong></p>
+                        </div>
+                        <div class="flex flex-wrap gap-1.5 w-full sm:w-auto justify-start sm:justify-end">
+                            ${!isSuper ? `
+                                <button onclick="rewardUser('${u._id}', '${u.username}')" class="px-2 py-1 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 transition-colors">
+                                    + Reward
+                                </button>
+                                <button onclick="updateUserStatus('${u._id}', '${u.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE'}')" class="px-2 py-1 rounded text-[10px] font-bold ${u.status === 'ACTIVE' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30'} transition-colors">
+                                    ${u.status === 'ACTIVE' ? 'Suspend' : 'Activate'}
+                                </button>
+                                <button onclick="updateUserStatus('${u._id}', '${u.status === 'LOCKED' ? 'ACTIVE' : 'LOCKED'}')" class="px-2 py-1 rounded text-[10px] font-bold ${u.status === 'LOCKED' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30' : 'bg-slate-500/20 text-slate-300 border border-slate-500/30 hover:bg-slate-500/30'} transition-colors">
+                                    ${u.status === 'LOCKED' ? 'Unlock W/D' : 'Lock W/D'}
+                                </button>
+                                <button onclick="deleteUser('${u._id}', '${u.username}')" class="px-2 py-1 rounded text-[10px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30 transition-colors">
+                                    Delete
+                                </button>
+                            ` : '<span class="text-[10px] text-purple-400 italic">Protected Account</span>'}
+                            
+                            ${currentAdminRole === 'SUPERADMIN' && !isSuper ? `
+                                <button onclick="updateUserRole('${u._id}', '${u.role === 'ADMIN' ? 'USER' : 'ADMIN'}')" class="px-2 py-1 rounded text-[10px] font-bold bg-sky-500/20 text-sky-400 border border-sky-500/30 hover:bg-sky-500/30 transition-colors">
+                                    ${u.role === 'ADMIN' ? 'Demote to User' : 'Promote to Admin'}
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            if (totalUsers === 0) {
+                listContainer.innerHTML = '<p class="text-slate-500 text-center py-2">No users found.</p>';
+            }
+
+            // Update Pagination Controls
+            document.getElementById('user-pagination-info').innerText = `Showing ${totalUsers === 0 ? 0 : startIndex + 1}-${endIndex} of ${totalUsers} users`;
+
+            const prevBtn = document.getElementById('btn-prev-user-page');
+            const nextBtn = document.getElementById('btn-next-user-page');
+
+            if (prevBtn) prevBtn.disabled = currentUserPage === 1;
+            if (nextBtn) nextBtn.disabled = currentUserPage === totalPages || totalUsers === 0;
+
+            const pageNumbersDiv = document.getElementById('user-page-numbers');
+            if (pageNumbersDiv) {
+                let pageNumbersHtml = '';
+                for (let i = 1; i <= totalPages; i++) {
+                    if (i === 1 || i === totalPages || (i >= currentUserPage - 1 && i <= currentUserPage + 1)) {
+                        pageNumbersHtml += `<button onclick="goToUserPage(${i})" class="px-2 py-1 rounded text-xs ${i === currentUserPage ? 'bg-emerald-500 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'}">${i}</button>`;
+                    } else if (i === currentUserPage - 2 || i === currentUserPage + 2) {
+                        pageNumbersHtml += `<span class="px-1 text-slate-500">...</span>`;
+                    }
+                }
+                pageNumbersDiv.innerHTML = pageNumbersHtml;
+            }
+        }
+
+        function changeUserPage(delta) {
+            const totalPages = Math.ceil(globalUsersList.length / USERS_PER_PAGE) || 1;
+            currentUserPage += delta;
+            if (currentUserPage < 1) currentUserPage = 1;
+            if (currentUserPage > totalPages) currentUserPage = totalPages;
+            renderUsersList();
+        }
+
+        function goToUserPage(page) {
+            currentUserPage = page;
+            renderUsersList();
+        }
+
+        function renderAdminBankAccounts(accounts) {
+            const container = document.getElementById('admin-bank-accounts-container');
+            container.innerHTML = '';
+            accounts.forEach(acc => addBankAccountRow(acc));
+            if (accounts.length === 0) addBankAccountRow();
+        }
+
+        function addBankAccountRow(acc = { bankName: '', accountNumber: '', accountName: '', isActive: true }) {
+            const container = document.getElementById('admin-bank-accounts-container');
+            const row = document.createElement('div');
+            row.className = 'bank-account-row bg-slate-950 p-3 rounded border border-slate-700 space-y-2 relative';
+            row.innerHTML = `
+                <button type="button" onclick="this.parentElement.remove()" class="absolute top-2 right-2 text-rose-400 hover:text-rose-300">✕</button>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">Bank Name</label>
+                        <input type="text" class="bank-name w-full p-2 rounded bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none" value="${acc.bankName}" required />
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">Account Number</label>
+                        <input type="text" class="bank-acc w-full p-2 rounded bg-slate-900 border border-slate-700 text-white text-xs font-mono focus:outline-none" value="${acc.accountNumber}" required />
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2 items-center">
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">Account Name</label>
+                        <input type="text" class="bank-name-acc w-full p-2 rounded bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none" value="${acc.accountName}" required />
+                    </div>
+                    <div class="flex items-center gap-2 mt-4">
+                        <input type="checkbox" class="bank-active w-4 h-4 rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-emerald-500" ${acc.isActive ? 'checked' : ''} />
+                        <label class="text-xs text-slate-300">Active (in rotation)</label>
+                    </div>
+                </div>
+            `;
+            container.appendChild(row);
+        }
+
+        // === ACTIONS ===
+
+        async function savePaymentSettings(e) {
+            e.preventDefault();
+
+            const bankRows = document.querySelectorAll('.bank-account-row');
+            const nairaBankAccounts = Array.from(bankRows).map(row => ({
+                bankName: row.querySelector('.bank-name').value.trim(),
+                accountNumber: row.querySelector('.bank-acc').value.trim(),
+                accountName: row.querySelector('.bank-name-acc').value.trim(),
+                isActive: row.querySelector('.bank-active').checked
+            })).filter(b => b.bankName && b.accountNumber && b.accountName);
+
+            if (nairaBankAccounts.length === 0) {
+                return showToast('Please add at least one valid bank account.', 'warning');
+            }
+
+            const payload = {
+                usdtEnabled: document.getElementById('set-usdt-enabled').value === 'true',
+                usdtBep20Address: document.getElementById('set-usdt-address').value.trim(),
+                usdtConfirmations: parseInt(document.getElementById('set-usdt-conf').value),
+                nairaDepositEnabled: document.getElementById('set-ngn-enabled').value === 'true',
+                nairaExchangeRate: parseFloat(document.getElementById('set-ngn-rate').value),
+                nairaBankInstructions: document.getElementById('set-ngn-instructions').value.trim(),
+                nairaBankAccounts
+            };
+
+            try {
+                const data = await apiCall('/api/admin/payment-settings', 'PUT', payload);
+                showToast(data.message, 'success');
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function toggleHotWindow(isChecked) {
+            try {
+                await apiCall('/api/admin/hot-window', 'POST', { forceHotWindowOpen: isChecked });
+                showToast(`Hot Window manually ${isChecked ? 'OPENED' : 'CLOSED'}.`, 'info');
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function resetHotSlots() {
+            const proceed = await customConfirm('Reset Slots', 'Are you sure you want to reset all Hot Plan slots to 0? This will allow users to purchase again.');
+            if (!proceed) return;
+
+            try {
+                await apiCall('/api/admin/hot-window', 'POST', { resetSlots: true });
+                showToast('All Hot Plan slots have been reset.', 'success');
+                loadAdminData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+        async function editPromoBudget() {
+            const currentText = document.getElementById('promo-budget-display').innerText.replace(/[^0-9.]/g, '');
+            const newBudget = await customPrompt('Update Promotional Budget', `Current Weekly Rewards Promo Budget: $${currentText}. Enter new budget amount (USD):`);
+            if (newBudget === null || isNaN(newBudget) || Number(newBudget) < 0) return;
+
+            try {
+                await apiCall('/api/admin/hot-window', 'POST', { verifiedPromotionalBudget: parseFloat(newBudget) });
+                showToast(`Promotional budget updated to $${parseFloat(newBudget).toFixed(2)}.`, 'success');
+                loadAdminData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function togglePackageLock(planId, currentLocked) {
+            try {
+                const data = await apiCall(`/api/admin/packages/${planId}`, 'PATCH', { isLocked: !currentLocked });
+                showToast(data.message, 'success');
+                loadAdminData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function editPackageLimit(planId, currentLimit) {
+            const limit = await customPrompt('Edit Purchase Limit', `Current limit: ${currentLimit}. Enter new limit (number):`);
+            if (limit === null || isNaN(limit) || limit < 1) return;
+
+            try {
+                await apiCall(`/api/admin/packages/${planId}`, 'PATCH', { purchaseLimit: parseInt(limit) });
+                showToast('Purchase limit updated.', 'success');
+                loadAdminData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function editHotPackage(planId, currentLimit, currentSlots) {
+            const slots = await customPrompt('Edit Total Slots', `Current total slots: ${currentSlots}. Enter new total slots:`);
+            if (slots === null || isNaN(slots)) return;
+
+            const limit = await customPrompt('Edit Purchase Limit', `Current limit: ${currentLimit}. Enter new limit:`);
+            if (limit === null || isNaN(limit) || limit < 1) return;
+
+            try {
+                await apiCall(`/api/admin/packages/${planId}`, 'PATCH', { totalSlots: parseInt(slots), purchaseLimit: parseInt(limit) });
+                showToast('Hot package settings updated.', 'success');
+                loadAdminData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function resetPackageSlots(planId) {
+            const proceed = await customConfirm('Reset Specific Slots', 'Are you sure you want to reset the claimed slots to 0 for this specific package?');
+            if (!proceed) return;
+            try {
+                await apiCall(`/api/admin/packages/${planId}`, 'PATCH', { resetClaimed: true });
+                showToast('Slots reset to 0.', 'success');
+                loadAdminData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function rewardUser(userId, username) {
+            const amountStr = await customPrompt('Credit Promotional Reward', `Enter USD reward amount for ${username}:`);
+            if (amountStr === null || isNaN(amountStr) || Number(amountStr) <= 0) return;
+
+            const note = await customPrompt('Reward Note', 'Enter reward description (or leave blank for default):');
+            if (note === null) return;
+
+            try {
+                const data = await apiCall(`/api/admin/users/${userId}/reward`, 'POST', {
+                    amount: parseFloat(amountStr),
+                    note: note.trim() || undefined
+                });
+                showToast(data.message, 'success');
+                loadAdminData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function updateUserStatus(userId, newStatus) {
+            const action = newStatus === 'SUSPENDED' ? 'suspend' : (newStatus === 'LOCKED' ? 'lock withdrawals for' : 'activate');
+            const proceed = await customConfirm('Change Status', `Are you sure you want to ${action} this user?`);
+            if (!proceed) return;
+            try {
+                const data = await apiCall(`/api/admin/users/${userId}/status`, 'PATCH', { status: newStatus });
+                showToast(data.message, 'success');
+                loadAdminData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function deleteUser(userId, username) {
+            const proceed = await customConfirm('Delete User', `<span class="text-rose-400 font-bold">WARNING:</span> Are you sure you want to permanently delete <strong>${username}</strong> and all associated data? This cannot be undone.`);
+            if (!proceed) return;
+            try {
+                const data = await apiCall(`/api/admin/users/${userId}`, 'DELETE');
+                showToast(data.message, 'success');
+                loadAdminData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function updateUserRole(userId, newRole) {
+            const proceed = await customConfirm('Change Role', `Change this user's role to <strong>${newRole}</strong>?`);
+            if (!proceed) return;
+            try {
+                const data = await apiCall(`/api/admin/users/${userId}/role`, 'PATCH', { role: newRole });
+                showToast(data.message, 'success');
+                loadAdminData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function searchUser() {
+            const q = document.getElementById('search-user-input').value.trim();
+            if (!q) return showToast('Please enter a name, email, or ID to search.', 'warning');
+
+            try {
+                const data = await apiCall(`/api/admin/users/search?q=${encodeURIComponent(q)}`);
+                const resDiv = document.getElementById('user-search-results');
+
+                if (data.users.length === 0) {
+                    resDiv.innerHTML = '<p class="text-xs text-rose-400">No users found.</p>';
+                    return;
+                }
+
+                resDiv.innerHTML = data.users.map(u => `
+                    <button onclick="selectUser('${u._id}', '${u.username}', '${u.email}', ${u.availableBalance})" class="w-full text-left p-2 bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 transition-colors">
+                        <p class="text-xs font-bold text-white">${u.username}</p>
+                        <p class="text-[10px] text-slate-400">${u.email} • Bal: $${u.availableBalance.toFixed(2)}</p>
+                    </button>
+                `).join('');
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        function selectUser(id, username, email, balance) {
+            activeUserId = id;
+            document.getElementById('credit-user-id').value = id;
+            document.getElementById('selected-user-display').innerText = `${username} (${email})`;
+            document.getElementById('selected-user-balance').innerText = `$${balance.toFixed(2)}`;
+            document.getElementById('user-search-results').innerHTML = '';
+        }
+
+        async function submitManualCredit(e) {
+            e.preventDefault();
+            if (!activeUserId) return showToast('Please search and select a user account first.', 'error');
+
+            const amount = document.getElementById('credit-amount').value;
+            const currency = document.getElementById('credit-currency').value;
+            const txid = document.getElementById('credit-txid').value.trim();
+            const note = document.getElementById('credit-note').value.trim();
+
+            const currentBal = document.getElementById('selected-user-balance').innerText;
+            const username = document.getElementById('selected-user-display').innerText;
+
+            const confirmMsg = `
+                <div class="space-y-2">
+                    <p class="text-amber-400 font-bold">CONFIRM MANUAL DEPOSIT CREDIT:</p>
+                    <ul class="list-disc pl-5">
+                        <li><strong>Member:</strong> ${username}</li>
+                        <li><strong>Current Balance:</strong> ${currentBal}</li>
+                        <li><strong>Amount Received:</strong> ${amount} ${currency === 'NGN' ? 'NGN (Bank)' : 'USDT (Crypto)'}</li>
+                        <li><strong>TXID / Ref:</strong> ${txid || 'Auto-generated'}</li>
+                        <li><strong>Audit Note:</strong> ${note}</li>
+                    </ul>
+                    <p class="mt-4 font-bold text-white">Proceed with immediate wallet credit?</p>
+                </div>
+            `;
+
+            const proceed = await customConfirm('Manual Credit Confirmation', confirmMsg);
+            if (!proceed) return;
+
+            try {
+                const payload = {
+                    userId: activeUserId,
+                    amountReceived: parseFloat(amount),
+                    paymentCurrency: currency,
+                    paymentMethod: currency === 'NGN' ? 'NGN_BANK' : 'USDT_BEP20',
+                    txidOrReference: txid,
+                    adminNote: note
+                };
+
+                const data = await apiCall('/api/admin/deposits/manual-credit', 'POST', payload);
+                showToast(data.message, 'success');
+
+                // Reset form
+                document.getElementById('credit-amount').value = '';
+                document.getElementById('credit-txid').value = '';
+                document.getElementById('credit-note').value = '';
+                document.getElementById('selected-user-display').innerText = 'None';
+                document.getElementById('selected-user-balance').innerText = '$0.00';
+                activeUserId = null;
+
+                loadAdminData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function processDeposit(id, decision) {
+            let note = '';
+            if (decision === 'APPROVE') {
+                note = await customPrompt('Approve Deposit', 'Optional Admin Note for APPROVE:');
+                if (note === null) return;
+            } else {
+                const proceed = await customConfirm('Reject Deposit', 'Are you sure you want to reject this deposit request?');
+                if (!proceed) return;
+            }
+
+            try {
+                const data = await apiCall(`/api/admin/deposits/${id}/decision`, 'POST', { decision, adminNote: note });
+                showToast(data.message, decision === 'APPROVE' ? 'success' : 'warning');
+                loadAdminData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function processWithdrawal(id, decision) {
+            let payoutTxid = '';
+            if (decision === 'APPROVE') {
+                payoutTxid = await customPrompt('Approve Withdrawal', 'Enter the Blockchain TXID (Hash) of the payout transfer:');
+                if (payoutTxid === null) return;
+            } else {
+                const proceed = await customConfirm('Reject Withdrawal', 'Are you sure you want to reject this withdrawal? Funds will be refunded to the user.');
+                if (!proceed) return;
+            }
+
+            try {
+                const data = await apiCall(`/api/admin/withdrawals/${id}/decision`, 'POST', { decision, payoutTxid });
+                showToast(data.message, decision === 'APPROVE' ? 'success' : 'warning');
+                loadAdminData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function replyTicket(id, ticketRef) {
+            const reply = await customPrompt('Reply to Ticket', `Enter your response for ticket ${ticketRef}:`);
+            if (reply === null || !reply.trim()) return;
+
+            try {
+                const data = await apiCall(`/api/admin/tickets/${id}/reply`, 'POST', { adminReply: reply });
+                showToast(data.message, 'success');
+                loadAdminData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+    </script>
+</body>
+
+</html>

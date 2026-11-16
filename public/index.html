@@ -1,0 +1,2698 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#020617">
+    <title>LTRIX | Smart Wallet, USDT BEP20 & NGN Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Toast Animations */
+        .toast-anim-enter {
+            animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .toast-anim-leave {
+            animation: slideOut 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        /* Modal Animations */
+        .modal-anim-enter {
+            animation: modalIn 0.2s ease-out forwards;
+        }
+
+        @keyframes modalIn {
+            from {
+                transform: scale(0.95);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Hide scrollbar for cleaner look on mobile */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased overflow-x-hidden">
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container"
+        class="fixed top-4 right-4 left-4 sm:left-auto z-[9999] flex flex-col gap-3 pointer-events-none items-end">
+    </div>
+
+    <!-- Custom Confirm Modal -->
+    <div id="custom-confirm-modal"
+        class="fixed inset-0 z-[10000] hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div
+            class="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden modal-anim-enter">
+            <div class="p-4 sm:p-5 border-b border-slate-800 bg-slate-800/50">
+                <h3 id="confirm-title" class="text-base sm:text-lg font-bold text-white">Confirm Action</h3>
+            </div>
+            <div class="p-4 sm:p-5 text-sm text-slate-300" id="confirm-message">
+                Are you sure you want to proceed?
+            </div>
+            <div class="p-4 bg-slate-900 border-t border-slate-800 flex flex-col sm:flex-row justify-end gap-3">
+                <button id="confirm-btn-cancel"
+                    class="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-sm transition-colors">Cancel</button>
+                <button id="confirm-btn-ok"
+                    class="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold text-sm transition-colors">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Prompt Modal -->
+    <div id="custom-prompt-modal"
+        class="fixed inset-0 z-[10000] hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div
+            class="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden modal-anim-enter">
+            <div class="p-4 sm:p-5 border-b border-slate-800 bg-slate-800/50">
+                <h3 id="prompt-title" class="text-base sm:text-lg font-bold text-white">Input Required</h3>
+            </div>
+            <div class="p-4 sm:p-5 space-y-3">
+                <p id="prompt-message" class="text-sm text-slate-300"></p>
+                <input type="text" id="prompt-input"
+                    class="w-full p-3 rounded-lg bg-slate-950 border border-slate-700 text-white focus:outline-none focus:border-emerald-500 text-base" />
+            </div>
+            <div class="p-4 bg-slate-900 border-t border-slate-800 flex flex-col sm:flex-row justify-end gap-3">
+                <button id="prompt-btn-cancel"
+                    class="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-sm transition-colors">Cancel</button>
+                <button id="prompt-btn-ok"
+                    class="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold text-sm transition-colors">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div id="forgot-password-modal"
+        class="fixed inset-0 z-[10000] hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div
+            class="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden modal-anim-enter">
+            <div class="p-4 sm:p-5 border-b border-slate-800 bg-slate-800/50 flex justify-between items-center">
+                <h3 class="text-base sm:text-lg font-bold text-emerald-400">🔐 Reset Account Password</h3>
+                <button type="button" onclick="closeForgotPasswordModal()"
+                    class="text-slate-400 hover:text-white text-sm">✕</button>
+            </div>
+
+            <!-- Step 1: Request OTP -->
+            <form id="forgot-step-1" onsubmit="requestPasswordResetOtp(event)" class="p-4 sm:p-5 space-y-4">
+                <p class="text-xs text-slate-300">Enter your registered LTRIX Email or Username. We will send a 6-digit
+                    verification code to your email.</p>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">Email or Username</label>
+                    <input type="text" id="forgot-identifier" required placeholder="Enter Email or Username"
+                        class="w-full p-3 rounded-lg bg-slate-950 border border-slate-700 text-white focus:outline-none focus:border-emerald-500 text-sm" />
+                </div>
+                <div class="flex justify-end gap-3 pt-2">
+                    <button type="button" onclick="closeForgotPasswordModal()"
+                        class="px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors">Cancel</button>
+                    <button type="submit" id="btn-send-otp"
+                        class="px-4 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold text-xs transition-colors">Send
+                        6-Digit Code</button>
+                </div>
+            </form>
+
+            <!-- Step 2: Verify OTP & Set New Password -->
+            <form id="forgot-step-2" onsubmit="confirmPasswordReset(event)" class="hidden p-4 sm:p-5 space-y-4">
+                <p class="text-xs text-emerald-400 font-medium" id="forgot-step-2-msg">Enter the 6-digit code sent to
+                    your email.</p>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">6-Digit Verification Code</label>
+                    <input type="text" id="forgot-otp" required maxlength="6" placeholder="123456"
+                        class="w-full p-3 rounded-lg bg-slate-950 border border-slate-700 text-amber-400 font-mono tracking-widest text-center text-lg focus:outline-none focus:border-emerald-500" />
+                </div>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1">New Password</label>
+                    <input type="password" id="forgot-new-password" required minlength="6" placeholder="••••••••••"
+                        class="w-full p-3 rounded-lg bg-slate-950 border border-slate-700 text-white focus:outline-none focus:border-emerald-500 text-sm" />
+                </div>
+                <div class="flex justify-between items-center gap-3 pt-2">
+                    <button type="button" onclick="backToForgotStep1()"
+                        class="px-3 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors">←
+                        Back</button>
+                    <button type="submit" id="btn-reset-pw"
+                        class="flex-1 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold text-xs transition-colors">Reset
+                        Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 1. UNIFIED AUTHENTICATION & LANDING SCREEN -->
+    <!-- ========================================== -->
+    <div id="auth-screen"
+        class="w-full min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-slate-800 via-slate-950 to-slate-950">
+
+        <!-- Floating Background Elements for "Busy" look -->
+        <div class="absolute top-20 right-[20%] w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none">
+        </div>
+        <div class="absolute bottom-10 left-[10%] w-96 h-96 bg-orange-500/10 rounded-full blur-3xl pointer-events-none">
+        </div>
+
+        <div class="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10 py-12 lg:py-8">
+
+            <!-- Left Side: Marketing & Live Activity Cards -->
+            <div class="flex flex-col gap-8 order-2 lg:order-1 mt-6 lg:mt-0">
+                <div class="space-y-4 text-center lg:text-left">
+                    <h1 class="text-4xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
+                        Smart Wealth <br>
+                        <span class="text-emerald-400">Automated Daily.</span>
+                    </h1>
+                    <p class="text-slate-400 text-base max-w-md mx-auto lg:mx-0">Get passive income by activating LTRIX
+                        automated packages. Share your referral link and earn a percentage of platform profits.</p>
+                </div>
+
+                <!-- Floating Activity Card -->
+                <div
+                    class="relative w-full max-w-sm mx-auto lg:mx-0 bg-slate-900/60 backdrop-blur-xl border border-slate-700/50 p-5 rounded-2xl shadow-2xl mt-2">
+                    <div class="flex items-center gap-4 mb-4">
+                        <div
+                            class="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center text-xl border border-slate-600">
+                            👤</div>
+                        <div>
+                            <p id="public-recent-user" class="text-white font-bold text-sm">Loading...</p>
+                            <p class="text-xs text-slate-400">Recent Payout</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="flex-1 bg-slate-950/50 p-3 rounded-xl border border-slate-800/50">
+                            <p class="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Withdrawn</p>
+                            <p id="public-recent-amount" class="text-amber-400 font-bold font-mono">$0.00</p>
+                        </div>
+                        <div class="flex-1 bg-slate-950/50 p-3 rounded-xl border border-slate-800/50">
+                            <p class="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Total Members</p>
+                            <p id="public-total-members" class="text-emerald-400 font-bold font-mono">0</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side: The Login/Register Form -->
+            <div class="w-full max-w-md mx-auto order-1 lg:order-2">
+                <div class="p-6 bg-slate-900/80 backdrop-blur-md border border-slate-700 rounded-2xl shadow-2xl">
+                    <div class="flex items-center justify-center lg:justify-start gap-2 mb-2">
+                        <span class="text-2xl">💎</span>
+                        <h2 class="text-2xl font-extrabold tracking-wider text-emerald-400">LTRIX</h2>
+                    </div>
+                    <p
+                        class="text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-slate-400 mb-1 text-center lg:text-left">
+                        Your Opportunity, Your Earnings!</p>
+                    <p class="text-[10px] sm:text-xs text-slate-500 mb-6 text-center lg:text-left">Choose a package that
+                        suits your budget and review all package terms and conditions before participating.</p>
+
+                    <div class="flex gap-2 mb-6">
+                        <button type="button" onclick="toggleAuth('login')" id="tab-login"
+                            class="flex-1 py-2.5 rounded-lg bg-emerald-600 font-bold text-slate-950 text-sm transition-colors">Login</button>
+                        <button type="button" onclick="toggleAuth('register')" id="tab-register"
+                            class="flex-1 py-2.5 rounded-lg bg-slate-800 text-slate-400 font-bold text-sm transition-colors">Register</button>
+                    </div>
+
+                    <form id="auth-form" onsubmit="handleAuth(event)" class="space-y-4">
+                        <div id="identifier-field">
+                            <label class="block text-xs text-slate-400 mb-1">Email, Username, or ID</label>
+                            <input type="text" id="identifier" placeholder="Enter Email, Username, or ID"
+                                class="w-full p-3 rounded-lg bg-slate-800 border border-slate-700 text-base focus:border-emerald-500 focus:outline-none" />
+                        </div>
+
+                        <div id="register-fields" class="hidden space-y-4">
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Username</label>
+                                <input type="text" id="username" placeholder="Choose a username"
+                                    class="w-full p-3 rounded-lg bg-slate-800 border border-slate-700 text-base focus:border-emerald-500 focus:outline-none" />
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Email Address</label>
+                                <input type="email" id="email" placeholder="you@example.com"
+                                    class="w-full p-3 rounded-lg bg-slate-800 border border-slate-700 text-base focus:border-emerald-500 focus:outline-none" />
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Phone Number</label>
+                                <input type="tel" id="phone" placeholder="+1 / +234..."
+                                    class="w-full p-3 rounded-lg bg-slate-800 border border-slate-700 text-base focus:border-emerald-500 focus:outline-none" />
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">LTRIX Referral Code (Optional)</label>
+                                <input type="text" id="referralCode" placeholder="e.g. LTRIX-USER123"
+                                    class="w-full p-3 rounded-lg bg-slate-800 border border-slate-700 text-base focus:border-emerald-500 focus:outline-none" />
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="block text-xs text-slate-400">Password</label>
+                                <button type="button" id="forgot-password-link" onclick="openForgotPasswordModal()"
+                                    class="text-xs text-emerald-400 hover:underline font-semibold transition-colors">
+                                    Forgot Password?
+                                </button>
+                            </div>
+                            <input type="password" id="password" required placeholder="••••••••••"
+                                class="w-full p-3 rounded-lg bg-slate-800 border border-slate-700 text-base focus:border-emerald-500 focus:outline-none" />
+                        </div>
+
+                        <button type="submit"
+                            class="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold rounded-lg text-sm transition-colors">
+                            Access LTRIX Account
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 2. MEMBER SMART WALLET DASHBOARD           -->
+    <!-- ========================================== -->
+    <div id="app-screen" class="hidden w-full max-w-6xl mx-auto p-3 sm:p-4 md:p-8 space-y-6 sm:space-y-8">
+        <header
+            class="flex flex-col sm:flex-row sm:flex-wrap justify-between sm:items-center gap-4 bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-sm">
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">💎</span>
+                    <h1 class="text-xl font-extrabold tracking-wider text-emerald-400">LTRIX</h1>
+                    <span
+                        class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded">Smart
+                        Wallet</span>
+                </div>
+                <p class="text-xs text-slate-400 mt-1">Member: <span id="user-display"
+                        class="text-white font-medium"></span></p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                <span
+                    class="text-[10px] sm:text-xs bg-slate-800 px-3 py-1.5 rounded border border-slate-700 w-full sm:w-auto text-center sm:text-left">
+                    Referral Code: <strong id="ref-code-display" class="text-emerald-400"></strong>
+                </span>
+                <div class="flex gap-2 w-full sm:w-auto">
+                    <!-- STRICT SECURITY: hidden by default, only shown to ADMIN/SUPERADMIN via JS -->
+                    <button id="user-switch-btn" onclick="switchView('ADMIN')" style="display: none;"
+                        class="hidden flex-1 sm:flex-none justify-center text-xs bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/40 px-3 py-2 rounded font-semibold transition-colors items-center gap-1">
+                        🛡️ Admin Portal
+                    </button>
+                    <button onclick="copyReferralLink()"
+                        class="flex-1 sm:flex-none justify-center text-xs bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 px-3 py-2 rounded font-semibold transition-colors flex items-center gap-1">
+                        📋 Copy
+                    </button>
+                    <button onclick="logout()"
+                        class="flex-1 sm:flex-none justify-center text-xs bg-rose-600/20 text-rose-300 border border-rose-600/40 px-3 py-2 rounded font-semibold hover:bg-rose-600/30 transition-colors">
+                        Logout
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Smart Wallet Metrics -->
+        <section class="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+            <div class="bg-slate-900 p-3 sm:p-5 rounded-xl border border-slate-800">
+                <p class="text-[10px] sm:text-xs text-slate-400">Available Balance</p>
+                <p class="text-lg sm:text-2xl font-bold text-emerald-400 mt-1" id="stat-available">$0.00</p>
+            </div>
+            <div class="bg-slate-900 p-3 sm:p-5 rounded-xl border border-slate-800">
+                <p class="text-[10px] sm:text-xs text-slate-400">Pending Income</p>
+                <p class="text-lg sm:text-2xl font-bold text-amber-400 mt-1" id="stat-pending">$0.00</p>
+            </div>
+            <div class="bg-slate-900 p-3 sm:p-5 rounded-xl border border-slate-800">
+                <p class="text-[10px] sm:text-xs text-slate-400">Referral Earnings</p>
+                <p class="text-lg sm:text-2xl font-bold text-sky-400 mt-1" id="stat-referral">$0.00</p>
+            </div>
+            <div class="bg-slate-900 p-3 sm:p-5 rounded-xl border border-slate-800">
+                <p class="text-[10px] sm:text-xs text-slate-400">Total Withdrawals</p>
+                <p class="text-lg sm:text-2xl font-bold text-purple-400 mt-1" id="stat-withdrawals">$0.00</p>
+            </div>
+        </section>
+
+        <!-- ========================================================== -->
+        <!-- DEPOSIT (USDT BEP20 & NGN) + USDT-ONLY WITHDRAWAL SECTION  -->
+        <!-- ========================================================== -->
+        <section class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
+            <!-- Deposit Column (7 cols) -->
+            <div class="lg:col-span-7 bg-slate-900 p-4 sm:p-6 rounded-xl border border-slate-800 space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                    <div>
+                        <h2 class="text-lg font-bold text-emerald-400">💳 Deposit Funds</h2>
+                        <p class="text-[10px] sm:text-xs text-slate-400">Select USDT (BEP20) or Naira (NGN) Bank
+                            Transfer</p>
+                    </div>
+                    <div class="flex w-full sm:w-auto bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs">
+                        <button type="button" id="tab-dep-usdt" onclick="switchDepositMethod('USDT')"
+                            class="flex-1 sm:flex-none px-3 py-2 rounded bg-emerald-500 text-slate-950 font-bold transition-colors">
+                            USDT
+                        </button>
+                        <button type="button" id="tab-dep-ngn" onclick="switchDepositMethod('NGN')"
+                            class="flex-1 sm:flex-none px-3 py-2 rounded text-slate-400 hover:text-white transition-colors">
+                            NGN Bank
+                        </button>
+                    </div>
+                </div>
+
+                <!-- OPTION A: USDT BEP20 TWO-STEP UNIQUE DECIMAL DEPOSIT -->
+                <div id="deposit-pane-usdt" class="space-y-4">
+                    <div id="recharge-step-1" class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-4">
+                        <div
+                            class="flex flex-col sm:flex-row justify-between sm:items-center border-l-4 border-amber-400 pl-3 gap-2">
+                            <div>
+                                <p class="text-sm font-bold text-white">USDT Deposit Details</p>
+                                <p class="text-[10px] sm:text-xs text-slate-400">Network: <strong
+                                        class="text-amber-400">BNB Smart Chain (BEP20)</strong></p>
+                            </div>
+                            <span
+                                class="text-[10px] bg-amber-500/10 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded font-bold w-fit">
+                                Min: $5 USDT
+                            </span>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Enter Base Deposit Amount (USD /
+                                USDT)</label>
+                            <div
+                                class="flex items-center bg-slate-900 border border-slate-700 rounded-lg px-3 py-3 focus-within:border-emerald-500 transition-colors">
+                                <span class="font-bold text-emerald-400 mr-3 text-sm">USDT</span>
+                                <input type="number" id="recharge-amount" min="5" step="1" placeholder="e.g. 10, 20, 50"
+                                    class="w-full bg-transparent text-white text-base focus:outline-none" />
+                            </div>
+                            <p class="text-[10px] text-slate-500 mt-1.5 leading-tight">
+                                A unique 3-decimal identifier (+0.001 to +0.100 USDT) will be added in Step 2 to protect
+                                your transfer against TXID sniping.
+                            </p>
+                        </div>
+
+                        <button type="button" id="btn-next-step" onclick="generateUsdtDepositRequest()"
+                            class="w-full py-3 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold text-xs sm:text-sm transition-colors">
+                            Next Step — Generate Payment Amount
+                        </button>
+                    </div>
+
+                    <div id="recharge-step-2"
+                        class="hidden bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-4">
+                        <div class="bg-rose-950/40 border border-rose-500/60 rounded-lg p-4 text-center space-y-1">
+                            <p class="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider text-rose-400">⚠️
+                                CUSTOMIZED PAYMENT GATEWAY</p>
+                            <p class="text-[10px] sm:text-[11px] text-slate-300 leading-tight">Send <strong
+                                    class="text-white">EXACTLY</strong> the amount shown below for automatic payment
+                                verification and account crediting.</p>
+                            <p id="recharge-exact-amount"
+                                class="text-2xl sm:text-3xl font-extrabold font-mono text-amber-400 pt-1">0.000 USDT</p>
+                            <p id="recharge-base-Breakdown" class="text-[10px] sm:text-[11px] text-slate-400"></p>
+                        </div>
+
+                        <div
+                            class="bg-slate-900 border border-emerald-500/30 rounded-lg p-3.5 space-y-2 text-[10px] sm:text-xs">
+                            <div class="flex justify-between items-center flex-wrap gap-1">
+                                <span><strong class="text-slate-400">Network:</strong> <span
+                                        class="text-amber-400 font-bold">BNB Smart Chain (BEP20)</span></span>
+                                <span id="display-confirmations" class="text-slate-400">12 Confirmations</span>
+                            </div>
+                            <div>
+                                <p class="text-slate-400 font-semibold mb-1">Platform USDT Receiving Address:</p>
+                                <div
+                                    class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 bg-slate-950 p-2.5 rounded border border-slate-800">
+                                    <span id="display-address"
+                                        class="text-emerald-400 font-mono break-all flex-1 text-[11px]">Loading...</span>
+                                    <button type="button" onclick="copyTextById('display-address')"
+                                        class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold px-3 py-1.5 rounded text-[10px] w-full sm:w-auto transition-colors">
+                                        📋 Copy Address
+                                    </button>
+                                </div>
+                            </div>
+                            <p class="text-slate-500">Reference: <span id="display-usdt-ref"
+                                    class="font-mono text-slate-300"></span></p>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Transaction Hash (BEP20
+                                TXID)</label>
+                            <input type="text" id="recharge-txid" placeholder="Paste 64-character BEP20 TXID (0x...)"
+                                class="w-full p-3 rounded-lg bg-slate-900 border border-slate-700 text-sm font-mono text-white focus:border-emerald-500 focus:outline-none" />
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <button type="button" onclick="cancelUsdtDepositRequest()"
+                                class="w-full sm:flex-1 py-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors">
+                                Cancel / Change Amount
+                            </button>
+                            <button type="button" id="btn-i-have-paid" onclick="handleRecharge()"
+                                class="w-full sm:flex-[2] py-3 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold text-xs transition-colors">
+                                I Have Paid — Verify TXID
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- OPTION B: NIGERIAN NAIRA (NGN) LOCAL BANK TRANSFER -->
+                <div id="deposit-pane-ngn" class="hidden space-y-4">
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-4">
+                        <div
+                            class="flex flex-col sm:flex-row justify-between sm:items-center border-l-4 border-emerald-400 pl-3 gap-2">
+                            <div>
+                                <p class="text-sm font-bold text-white">Nigerian Naira (₦ NGN) Transfer</p>
+                                <p class="text-[10px] sm:text-xs text-slate-400">Rate: <strong id="naira-rate-label"
+                                        class="text-emerald-400">$1 = ₦1,500</strong></p>
+                            </div>
+                            <span
+                                class="text-[10px] bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded font-bold w-fit">
+                                No Crypto Decimals
+                            </span>
+                        </div>
+
+                        <div id="naira-step-1" class="space-y-3">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">Intended Amount (USD)</label>
+                                    <input type="number" id="naira-usd-amount" min="5" step="1"
+                                        oninput="updateNairaEquivalent()" placeholder="e.g. 10, 20, 50"
+                                        class="w-full p-3 rounded-lg bg-slate-900 border border-slate-700 text-base text-white focus:border-emerald-500 focus:outline-none" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">Calculated Naira (₦ NGN)</label>
+                                    <input type="text" id="naira-calculated-display" readonly value="₦0.00"
+                                        class="w-full p-3 rounded-lg bg-slate-900/60 border border-slate-800 text-base font-extrabold text-amber-400 font-mono focus:outline-none" />
+                                </div>
+                            </div>
+
+                            <div
+                                class="grid grid-cols-4 gap-2 text-center text-[10px] bg-slate-900 p-2 rounded border border-slate-800">
+                                <div><span class="text-slate-400">$10</span> <strong id="ex-10"
+                                        class="block text-white">₦15,000</strong></div>
+                                <div><span class="text-slate-400">$20</span> <strong id="ex-20"
+                                        class="block text-white">₦30,000</strong></div>
+                                <div><span class="text-slate-400">$50</span> <strong id="ex-50"
+                                        class="block text-white">₦75,000</strong></div>
+                                <div><span class="text-slate-400">$100</span> <strong id="ex-100"
+                                        class="block text-white">₦150,000</strong></div>
+                            </div>
+
+                            <button type="button" onclick="createNairaDepositRequest()"
+                                class="w-full py-3 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-extrabold text-xs sm:text-sm transition-colors">
+                                Proceed to Bank Transfer Details
+                            </button>
+                        </div>
+
+                        <div id="naira-bank-details-card"
+                            class="hidden space-y-3 pt-2 border-t border-slate-800 text-[11px] sm:text-xs">
+                            <div class="bg-emerald-950/30 border border-emerald-500/40 p-3.5 rounded-lg space-y-2">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-emerald-400">⏱️ Pending Request</span>
+                                    <span id="naira-req-status-badge"
+                                        class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold text-[9px]">PENDING</span>
+                                </div>
+                                <p>Ref: <strong id="ngn-ref-display" class="text-amber-400 font-mono"></strong></p>
+                                <p>Transfer: <strong id="ngn-amount-display"
+                                        class="text-base text-white font-extrabold"></strong> (<span
+                                        id="ngn-usd-equiv-display" class="text-emerald-400"></span>)</p>
+                            </div>
+
+                            <div class="bg-slate-900 p-3.5 rounded-lg border border-slate-800 space-y-2">
+                                <p class="font-bold text-slate-300">Transfer to Official LTRIX Account:</p>
+                                <div class="flex justify-between flex-wrap gap-1">
+                                    <span class="text-slate-400">Bank:</span>
+                                    <strong id="ngn-bank-name" class="text-white"></strong>
+                                </div>
+                                <div class="flex justify-between items-center flex-wrap gap-1">
+                                    <span class="text-slate-400">Account Number:</span>
+                                    <div class="flex items-center gap-2">
+                                        <strong id="ngn-bank-acc-num" class="text-amber-400 font-mono text-sm"></strong>
+                                        <button type="button" onclick="copyTextById('ngn-bank-acc-num')"
+                                            class="bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 px-2 py-0.5 rounded text-[10px] transition-colors">Copy</button>
+                                    </div>
+                                </div>
+                                <div class="flex justify-between flex-wrap gap-1">
+                                    <span class="text-slate-400">Account Name:</span>
+                                    <strong id="ngn-bank-acc-name" class="text-white text-right"></strong>
+                                </div>
+                                <p id="ngn-bank-instructions"
+                                    class="text-[10px] text-amber-300 bg-slate-950 p-2 rounded border border-slate-800 mt-2">
+                                </p>
+                            </div>
+
+                            <div id="ngn-confirm-controls" class="space-y-2 pt-2">
+                                <input type="text" id="ngn-sender-ref" placeholder="Sender Name or Session ID"
+                                    class="w-full p-3 rounded bg-slate-900 border border-slate-700 text-sm text-white focus:border-emerald-500 focus:outline-none" />
+                                <div class="flex flex-col sm:flex-row gap-2">
+                                    <button type="button" onclick="cancelNairaDepositRequest()"
+                                        class="w-full sm:flex-1 py-3 rounded bg-slate-800 text-slate-300 font-bold hover:bg-slate-700 transition-colors text-xs">
+                                        Cancel Request
+                                    </button>
+                                    <button type="button" onclick="confirmNairaTransferSent()"
+                                        class="w-full sm:flex-[2] py-3 rounded bg-emerald-500 text-slate-950 font-extrabold hover:bg-emerald-600 transition-colors text-xs">
+                                        I Have Sent the Transfer
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================================================== -->
+            <!-- WITHDRAW COLUMN (STRICTLY USDT BEP20 ONLY)         -->
+            <!-- ================================================== -->
+            <div
+                class="lg:col-span-5 bg-slate-900 p-4 sm:p-6 rounded-xl border border-slate-800 flex flex-col justify-between space-y-4">
+                <div class="space-y-4">
+                    <div class="flex flex-col sm:flex-row justify-between sm:items-start gap-2">
+                        <div>
+                            <h2 class="text-lg font-bold text-amber-400">🏦 Withdraw (USDT Only)</h2>
+                            <p class="text-[10px] sm:text-xs text-slate-400">Payouts are strictly in <strong
+                                    class="text-emerald-400">USDT (BEP20)</strong>.</p>
+                        </div>
+                        <span
+                            class="text-[10px] bg-amber-500/10 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded font-bold w-fit shrink-0">
+                            5% Fee • Min $5 • 1/Day
+                        </span>
+                    </div>
+
+                    <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
+                        <div>
+                            <div class="flex justify-between items-center mb-1 flex-wrap gap-1">
+                                <label class="text-[10px] sm:text-xs text-slate-400">Receiving USDT Wallet</label>
+                                <button type="button" onclick="saveDefaultWithdrawalAddress()"
+                                    class="text-[10px] text-emerald-400 hover:underline font-semibold transition-colors">
+                                    💾 Save Default
+                                </button>
+                            </div>
+                            <input type="text" id="withdraw-usdt-address" placeholder="0x... (BEP20 Address)"
+                                class="w-full p-3 rounded-lg bg-slate-900 border border-slate-700 text-xs font-mono text-emerald-400 focus:border-emerald-500 focus:outline-none" />
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] sm:text-xs text-slate-400 mb-1">Amount (USDT)</label>
+                            <input type="number" id="withdraw-amount" min="5" step="0.01"
+                                oninput="updateWithdrawalBreakdown()" placeholder="Enter amount ($5.00+)"
+                                class="w-full p-3 rounded-lg bg-slate-900 border border-slate-700 text-base text-white focus:border-emerald-500 focus:outline-none" />
+                        </div>
+
+                        <div
+                            class="bg-slate-900 p-3 rounded-lg border border-slate-800 text-[10px] sm:text-xs space-y-1">
+                            <div class="flex justify-between text-slate-400">
+                                <span>Network:</span>
+                                <strong class="text-amber-400">BEP20</strong>
+                            </div>
+                            <div class="flex justify-between text-slate-400">
+                                <span>Fee (5%):</span>
+                                <span id="wdr-fee-preview" class="text-rose-400">-$0.00</span>
+                            </div>
+                            <div class="flex justify-between text-white font-bold pt-1 border-t border-slate-800">
+                                <span>Net Receive:</span>
+                                <span id="wdr-net-preview" class="text-emerald-400 font-mono">0.00 USDT</span>
+                            </div>
+                        </div>
+
+                        <button type="button" onclick="withdrawFunds()"
+                            class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold py-3 rounded-lg text-xs sm:text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            Request Withdrawal
+                        </button>
+                    </div>
+                </div>
+
+                <div
+                    class="bg-slate-950 p-3.5 rounded-lg border border-slate-800 text-[10px] sm:text-xs text-slate-400 space-y-1">
+                    <p class="font-semibold text-slate-300">📌 Withdrawal Policy</p>
+                    <p>All wallet balances are paid out exclusively in <strong class="text-white">USDT (BEP20)</strong>.
+                        Limited to 1 withdrawal per UTC day.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 🔥 HOT PLANS — LIMITED SUNDAY DEALS! -->
+        <section
+            class="bg-gradient-to-br from-orange-950/60 via-slate-900 to-rose-950/50 p-4 sm:p-6 rounded-xl border-2 border-orange-500/50 shadow-xl space-y-5">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl sm:text-2xl">🔥</span>
+                        <h2 class="text-lg sm:text-xl font-extrabold tracking-wide text-orange-400">HOT PLANS</h2>
+                    </div>
+                    <p class="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-amber-300 mt-1">
+                        BIGGER PACKAGES. LIMITED SLOTS. FASTEST FINGER!
+                    </p>
+                </div>
+                <div
+                    class="bg-slate-950/80 border border-orange-500/40 px-3 py-2 rounded-lg text-left md:text-right w-full md:w-auto">
+                    <p id="hot-window-badge" class="text-[10px] font-bold uppercase text-amber-400">Checking Window...
+                    </p>
+                    <p id="hot-window-countdown" class="text-sm font-mono font-bold text-white mt-0.5">--:--:--</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px] sm:text-xs">
+                <div class="bg-slate-900/90 p-2 sm:p-3 rounded-lg border border-slate-800">
+                    <p class="text-slate-400">📅 OPENING</p>
+                    <p class="font-bold text-white mt-0.5">Sunday</p>
+                </div>
+                <div class="bg-slate-900/90 p-2 sm:p-3 rounded-lg border border-slate-800">
+                    <p class="text-slate-400">⏰ TIME</p>
+                    <p class="font-bold text-amber-400 mt-0.5">9AM-12PM</p>
+                </div>
+                <div class="bg-slate-900/90 p-2 sm:p-3 rounded-lg border border-slate-800">
+                    <p class="text-slate-400">⚡ ACCESS</p>
+                    <p class="font-bold text-orange-400 mt-0.5">FASTEST FINGER</p>
+                </div>
+                <div class="bg-slate-900/90 p-2 sm:p-3 rounded-lg border border-slate-800">
+                    <p class="text-slate-400">🔒 SLOTS</p>
+                    <p class="font-bold text-rose-400 mt-0.5">Limited</p>
+                </div>
+            </div>
+
+            <div id="hot-packages-grid" class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"></div>
+
+            <div
+                class="bg-slate-950/70 p-4 rounded-lg border border-orange-500/20 text-[10px] sm:text-xs text-slate-300 space-y-1">
+                <p class="font-bold text-orange-400 mb-1">📌 IMPORTANT</p>
+                <ul class="list-disc pl-4 space-y-1 text-slate-400">
+                    <li>Opens Sunday 9AM, closes strictly 12PM.</li>
+                    <li>Fastest finger — limited slots only.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Standard Available Packages -->
+        <section class="bg-slate-900 p-4 sm:p-6 rounded-xl border border-slate-800">
+            <h2 class="text-lg font-bold mb-1 text-white">📦 LTRIX Packages</h2>
+            <p class="text-[10px] sm:text-xs text-slate-400 mb-4">First income is credited immediately upon activation.
+            </p>
+            <div id="packages-grid" class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"></div>
+        </section>
+
+        <!-- 24-Hour Income Countdown & Active Cycles -->
+        <section class="bg-slate-900 p-4 sm:p-6 rounded-xl border border-slate-800">
+            <h2 class="text-lg font-bold mb-4 text-white">⏱️ Active Packages</h2>
+            <div id="active-packages-list" class="space-y-3 text-sm"></div>
+        </section>
+
+        <!-- Referral Dashboard & Weekly Rewards -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            <div
+                class="bg-slate-900 p-4 sm:p-6 rounded-xl border border-slate-800 flex flex-col justify-between space-y-4">
+                <div>
+                    <h2 class="text-lg font-bold mb-1 text-white">🎁 Referrals (6%)</h2>
+                    <p class="text-[10px] sm:text-xs text-slate-400 mb-3">Earn 6% immediately when a referral activates
+                        a package.</p>
+
+                    <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 mb-4">
+                        <p class="text-[10px] text-slate-400 mb-1">Your Link:</p>
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            <input type="text" id="ref-link-input" readonly
+                                class="flex-1 text-[10px] sm:text-xs p-2.5 rounded bg-slate-900 border border-slate-700 text-emerald-400 font-mono focus:outline-none" />
+                            <button onclick="copyReferralLink()"
+                                class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold px-3 py-2.5 rounded text-xs transition-colors shrink-0">
+                                Copy Link
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2 mb-4 text-center">
+                        <div class="bg-slate-800/80 p-2 rounded border border-slate-700">
+                            <p class="text-[10px] text-slate-400">Invited</p>
+                            <p id="ref-count-total" class="text-sm font-bold text-white">0</p>
+                        </div>
+                        <div class="bg-slate-800/80 p-2 rounded border border-slate-700">
+                            <p class="text-[10px] text-slate-400">Active</p>
+                            <p id="ref-count-eligible" class="text-sm font-bold text-emerald-400">0</p>
+                        </div>
+                        <div class="bg-slate-800/80 p-2 rounded border border-slate-700">
+                            <p class="text-[10px] text-slate-400">Earned</p>
+                            <p id="ref-total-commission" class="text-sm font-bold text-sky-400">$0.00</p>
+                        </div>
+                    </div>
+
+                    <div id="referrals-list" class="space-y-2 max-h-48 overflow-y-auto text-[10px] sm:text-xs"></div>
+                </div>
+            </div>
+
+            <div
+                class="bg-slate-900 p-4 sm:p-6 rounded-xl border border-slate-800 flex flex-col justify-between space-y-4">
+                <div class="space-y-4">
+                    <div class="flex justify-between items-start gap-2 flex-wrap">
+                        <div>
+                            <h2 class="text-lg font-bold text-white">🏆 Weekly Rewards</h2>
+                            <p class="text-[10px] sm:text-xs text-slate-400">Optional promotional rewards.</p>
+                        </div>
+                        <span id="weekly-cycle-badge"
+                            class="text-[10px] bg-amber-500/10 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded font-mono">
+                            2026-W46
+                        </span>
+                    </div>
+
+                    <div
+                        class="bg-slate-950 p-3 rounded-lg border border-slate-800 flex justify-between items-center text-xs">
+                        <span class="text-slate-400">Promo Budget:</span>
+                        <strong id="promo-budget-display" class="text-sm text-emerald-400 font-bold">$5,000.00</strong>
+                    </div>
+
+                    <div class="p-3 bg-slate-800/80 rounded-lg border border-slate-700 space-y-2">
+                        <div class="flex justify-between items-center flex-wrap gap-1">
+                            <div>
+                                <p class="text-xs font-bold text-white">Builder ($15)</p>
+                                <p class="text-[10px] text-slate-400">Invite 5 this week.</p>
+                            </div>
+                            <span id="builder-progress-text" class="text-xs font-bold text-amber-400">0 / 5</span>
+                        </div>
+                        <div class="w-full bg-slate-950 h-2 rounded-full overflow-hidden">
+                            <div id="builder-progress-bar" class="bg-emerald-400 h-full transition-all"
+                                style="width: 0%"></div>
+                        </div>
+                        <button id="btn-claim-builder" onclick="claimWeeklyReward('BUILDER_15')" disabled
+                            class="w-full py-2 rounded text-[10px] sm:text-xs font-bold bg-slate-700 text-slate-400 cursor-not-allowed transition-colors">
+                            Need 5 Referrals
+                        </button>
+                    </div>
+
+                    <div class="p-3 bg-slate-800/80 rounded-lg border border-slate-700 space-y-2">
+                        <div class="flex justify-between items-center flex-wrap gap-1">
+                            <div>
+                                <p class="text-xs font-bold text-white">Leader ($40)</p>
+                                <p class="text-[10px] text-slate-400">Invite 10 this week.</p>
+                            </div>
+                            <span id="leader-progress-text" class="text-xs font-bold text-amber-400">0 / 10</span>
+                        </div>
+                        <div class="w-full bg-slate-950 h-2 rounded-full overflow-hidden">
+                            <div id="leader-progress-bar" class="bg-sky-400 h-full transition-all" style="width: 0%">
+                            </div>
+                        </div>
+                        <button id="btn-claim-leader" onclick="claimWeeklyReward('LEADER_40')" disabled
+                            class="w-full py-2 rounded text-[10px] sm:text-xs font-bold bg-slate-700 text-slate-400 cursor-not-allowed transition-colors">
+                            Need 10 Referrals
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Notifications & Transaction History -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            <div class="bg-slate-900 p-4 sm:p-6 rounded-xl border border-slate-800 space-y-4">
+                <div class="flex justify-between items-center flex-wrap gap-2">
+                    <div class="flex items-center gap-2">
+                        <h2 class="text-lg font-bold text-white">🔔 Notifications</h2>
+                        <span id="unread-badge"
+                            class="text-[10px] bg-emerald-500 text-slate-950 font-bold px-2 py-0.5 rounded-full">0</span>
+                    </div>
+                    <button onclick="markAllNotificationsRead()"
+                        class="text-[10px] sm:text-xs text-emerald-400 hover:underline transition-colors">
+                        Mark read
+                    </button>
+                </div>
+                <div id="notifications-list" class="space-y-2 max-h-64 overflow-y-auto text-[10px] sm:text-xs pr-1">
+                </div>
+            </div>
+
+            <div class="bg-slate-900 p-4 sm:p-6 rounded-xl border border-slate-800 space-y-4">
+                <div class="flex flex-wrap justify-between items-center gap-2">
+                    <h2 class="text-lg font-bold text-white">📜 Transactions</h2>
+                    <button onclick="exportTransactionsCSV()"
+                        class="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2 py-1 rounded transition-colors">
+                        ⬇️ Export CSV
+                    </button>
+                </div>
+
+                <!-- Horizontal scroll for filters on mobile -->
+                <div class="flex flex-nowrap sm:flex-wrap gap-1.5 text-[10px] overflow-x-auto no-scrollbar pb-1">
+                    <button onclick="setTxFilter('ALL')" id="tx-tab-ALL"
+                        class="whitespace-nowrap px-3 py-1.5 rounded bg-emerald-500 text-slate-950 font-bold transition-colors">All</button>
+                    <button onclick="setTxFilter('DEPOSIT')" id="tx-tab-DEPOSIT"
+                        class="whitespace-nowrap px-3 py-1.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors">Deposits</button>
+                    <button onclick="setTxFilter('WITHDRAWAL')" id="tx-tab-WITHDRAWAL"
+                        class="whitespace-nowrap px-3 py-1.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors">Withdrawals</button>
+                    <button onclick="setTxFilter('DAILY_INCOME')" id="tx-tab-DAILY_INCOME"
+                        class="whitespace-nowrap px-3 py-1.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors">Daily
+                        Income</button>
+                    <button onclick="setTxFilter('REWARDS')" id="tx-tab-REWARDS"
+                        class="whitespace-nowrap px-3 py-1.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors">Rewards</button>
+                </div>
+
+                <div id="transactions-list" class="space-y-2 max-h-64 overflow-y-auto text-[10px] sm:text-xs pr-1">
+                </div>
+            </div>
+        </section>
+
+        <!-- Customer Support & Security & Transparency Centre -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            <div class="bg-slate-900 p-4 sm:p-6 rounded-xl border border-slate-800 space-y-4">
+                <div class="flex justify-between items-center flex-wrap gap-2">
+                    <h2 class="text-lg font-bold text-white">🎧 Support</h2>
+                    <div class="flex gap-1 text-[10px] sm:text-xs">
+                        <button onclick="switchSupportTab('TICKET')" id="sup-tab-ticket"
+                            class="px-3 py-1.5 rounded bg-sky-500 text-slate-950 font-bold transition-colors">Ticket</button>
+                        <button onclick="switchSupportTab('FAQ')" id="sup-tab-faq"
+                            class="px-3 py-1.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors">FAQs</button>
+                    </div>
+                </div>
+
+                <div id="support-ticket-pane" class="space-y-4">
+                    <form onsubmit="submitTicket(event)" class="space-y-3">
+                        <div class="grid grid-cols-3 gap-2">
+                            <select id="ticket-category"
+                                class="col-span-1 p-2 bg-slate-800 border border-slate-700 rounded text-[10px] sm:text-xs text-white focus:outline-none">
+                                <option value="GENERAL">General</option>
+                                <option value="DEPOSIT">Deposit</option>
+                                <option value="WITHDRAWAL">Withdrawal</option>
+                                <option value="PACKAGE">Package</option>
+                            </select>
+                            <input type="text" id="ticket-subject" required placeholder="Subject"
+                                class="col-span-2 p-2 bg-slate-800 border border-slate-700 rounded text-[10px] sm:text-xs focus:outline-none" />
+                        </div>
+                        <textarea id="ticket-message" required placeholder="Describe issue..." rows="2"
+                            class="w-full p-2 bg-slate-800 border border-slate-700 rounded text-[10px] sm:text-xs focus:outline-none"></textarea>
+                        <button type="submit"
+                            class="w-full py-2.5 bg-sky-500 hover:bg-sky-600 text-slate-950 font-bold rounded text-xs transition-colors">Submit
+                            Ticket</button>
+                    </form>
+                    <div id="support-tickets-list" class="space-y-2 max-h-40 overflow-y-auto text-[10px] sm:text-xs">
+                    </div>
+                </div>
+
+                <div id="support-faq-pane" class="hidden space-y-2 text-[10px] sm:text-xs text-slate-300">
+                    <p class="font-bold text-white mb-2">FAQs</p>
+                    <div class="p-3 bg-slate-800/80 rounded-lg border border-slate-700">
+                        <p class="font-bold text-white">Q: How long do withdrawals take?</p>
+                        <p class="text-slate-400 mt-1">A: Processed manually within 24 hrs. 1 withdrawal per day limit.
+                        </p>
+                    </div>
+                    <div class="p-3 bg-slate-800/80 rounded-lg border border-slate-700">
+                        <p class="font-bold text-white">Q: Fees?</p>
+                        <p class="text-slate-400 mt-1">A: 5% processing fee. Minimum $5.00 USDT.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 p-4 sm:p-6 rounded-xl border border-slate-800 space-y-4">
+                <h2 class="text-lg font-bold text-white">🛡️ Transparency</h2>
+                <div class="text-[10px] sm:text-xs space-y-2 bg-slate-950 p-3 rounded-lg border border-slate-800">
+                    <p class="flex justify-between"><span class="text-slate-400">Business Reg:</span> <strong
+                            id="trans-reg-no" class="text-white"></strong></p>
+                    <p class="flex justify-between"><span class="text-slate-400">Promo Budget:</span> <strong
+                            id="trans-budget" class="text-emerald-400"></strong></p>
+                    <p class="flex justify-between"><span class="text-slate-400">Total Members:</span> <strong
+                            id="trans-members" class="text-white"></strong></p>
+                    <p class="flex justify-between"><span class="text-slate-400">Active Packages:</span> <strong
+                            id="trans-active-pkgs" class="text-white"></strong></p>
+                    <p class="flex justify-between"><span class="text-slate-400">Withdrawals Paid:</span> <strong
+                            id="trans-withdrawals" class="text-amber-400"></strong></p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 3. ADMIN CONTROL CENTER                    -->
+    <!-- ========================================== -->
+    <div id="admin-screen" class="hidden w-full max-w-7xl mx-auto p-3 sm:p-4 md:p-8 space-y-6">
+        <header
+            class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-md">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">🛡️</span>
+                <div>
+                    <h1 class="text-lg sm:text-xl font-extrabold text-white">LTRIX Admin Portal</h1>
+                    <p class="text-[10px] sm:text-xs text-emerald-400" id="admin-role-display">System Online</p>
+                </div>
+            </div>
+            <div class="flex gap-2 w-full sm:w-auto">
+                <!-- STRICT SECURITY: hidden by default, only shown to ADMIN via JS -->
+                <button id="admin-switch-btn" onclick="switchView('USER')" style="display: none;"
+                    class="hidden flex-1 sm:flex-none px-4 py-2 bg-emerald-600/20 text-emerald-400 border border-emerald-600/30 hover:bg-emerald-600/30 rounded-lg text-sm font-bold transition-colors">
+                    👤 User Dashboard
+                </button>
+                <button onclick="logout()"
+                    class="flex-1 sm:flex-none px-4 py-2 bg-rose-600/20 text-rose-400 border border-rose-600/30 hover:bg-rose-600/30 rounded-lg text-sm font-bold transition-colors">
+                    Logout
+                </button>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+            <!-- Left Column: Settings & Hot Window -->
+            <div class="space-y-4 sm:space-y-6">
+                <!-- Payment Settings -->
+                <div class="bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-800 space-y-4">
+                    <h2 class="text-base sm:text-lg font-bold text-emerald-400 border-b border-slate-800 pb-2">💳
+                        Payment Configurations</h2>
+                    <form id="settings-form" onsubmit="savePaymentSettings(event)"
+                        class="space-y-3 text-[10px] sm:text-xs">
+                        <div>
+                            <label class="block text-slate-400 mb-1">USDT (BEP20) Status</label>
+                            <select id="set-usdt-enabled"
+                                class="w-full p-2.5 rounded bg-slate-950 border border-slate-700 text-white focus:outline-none">
+                                <option value="true">ENABLED</option>
+                                <option value="false">DISABLED</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-slate-400 mb-1">Platform USDT BEP20 Address</label>
+                            <input type="text" id="set-usdt-address"
+                                class="w-full p-2.5 rounded bg-slate-950 border border-slate-700 text-white font-mono focus:outline-none" />
+                        </div>
+                        <div>
+                            <label class="block text-slate-400 mb-1">Confirmations</label>
+                            <input type="number" id="set-usdt-conf"
+                                class="w-full p-2.5 rounded bg-slate-950 border border-slate-700 text-white focus:outline-none" />
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-slate-400 mb-1">NGN Status</label>
+                                <select id="set-ngn-enabled"
+                                    class="w-full p-2.5 rounded bg-slate-950 border border-slate-700 text-white focus:outline-none">
+                                    <option value="true">ENABLED</option>
+                                    <option value="false">DISABLED</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-slate-400 mb-1">Rate (₦/$1)</label>
+                                <input type="number" id="set-ngn-rate"
+                                    class="w-full p-2.5 rounded bg-slate-950 border border-slate-700 text-white focus:outline-none" />
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-slate-400 mb-1">Bank Instructions (Global Note)</label>
+                            <input type="text" id="set-ngn-instructions"
+                                class="w-full p-2.5 rounded bg-slate-950 border border-slate-700 text-white focus:outline-none" />
+                        </div>
+
+                        <div class="pt-2 border-t border-slate-800">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-slate-400 font-bold">Naira Bank Accounts
+                                    (Auto-Rotation)</label>
+                                <button type="button" onclick="addBankAccountRow()"
+                                    class="px-2 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded text-[10px] hover:bg-emerald-500/30 transition-colors">+
+                                    Add Bank</button>
+                            </div>
+                            <div id="admin-bank-accounts-container" class="space-y-2 max-h-64 overflow-y-auto pr-1">
+                                <!-- Dynamic rows injected here -->
+                            </div>
+                        </div>
+
+                        <button type="submit"
+                            class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold rounded text-xs transition-colors mt-4">Save
+                            Settings</button>
+                    </form>
+                </div>
+
+                <!-- Hot Window Control -->
+                <div class="bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-800 space-y-4">
+                    <h2 class="text-base sm:text-lg font-bold text-orange-400 border-b border-slate-800 pb-2">🔥 Hot
+                        Window Override</h2>
+                    <div class="flex items-center justify-between text-xs">
+                        <span class="text-slate-300">Force Open:</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="hot-force-toggle" class="sr-only peer"
+                                onchange="toggleHotWindow(this.checked)">
+                            <div
+                                class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500">
+                            </div>
+                        </label>
+                    </div>
+                    <button onclick="resetHotSlots()"
+                        class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-orange-400 border border-slate-700 text-xs font-bold rounded transition-colors">
+                        Reset ALL Slots
+                    </button>
+                    <div
+                        class="flex items-center justify-between text-[10px] sm:text-xs text-slate-400 pt-2 border-t border-slate-800">
+                        <span>Promo Budget: <strong id="admin-promo-budget"
+                                class="text-emerald-400">$0.00</strong></span>
+                        <button type="button" onclick="editPromoBudget()"
+                            class="px-2.5 py-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30 rounded text-[10px] font-bold transition-colors">
+                            Edit Budget
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Manual Credit & Management -->
+            <div class="lg:col-span-2 space-y-4 sm:space-y-6">
+                <!-- Manual Credit -->
+                <div class="bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-800 space-y-4">
+                    <h2 class="text-base sm:text-lg font-bold text-sky-400 border-b border-slate-800 pb-2">💸 Manual
+                        Credit</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-[10px] sm:text-xs text-slate-400 mb-1">Search User</label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="search-user-input"
+                                        class="flex-1 p-2.5 rounded bg-slate-950 border border-slate-700 text-xs focus:outline-none focus:border-sky-500"
+                                        placeholder="Email/Username/ID" />
+                                    <button onclick="searchUser()"
+                                        class="px-3 bg-sky-500 text-slate-950 font-bold rounded text-xs hover:bg-sky-600 transition-colors">Search</button>
+                                </div>
+                            </div>
+                            <div id="user-search-results" class="space-y-2 max-h-32 overflow-y-auto"></div>
+                        </div>
+                        <form onsubmit="submitManualCredit(event)" class="space-y-3 text-xs">
+                            <input type="hidden" id="credit-user-id" />
+                            <div class="p-3 bg-slate-950 rounded border border-slate-800 text-[10px] sm:text-xs">
+                                <p class="text-slate-400">Selected: <strong id="selected-user-display"
+                                        class="text-white">None</strong></p>
+                                <p class="text-slate-400 mt-1">Balance: <strong id="selected-user-balance"
+                                        class="text-emerald-400">$0.00</strong></p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-[10px] text-slate-400 mb-1">Amount</label>
+                                    <input type="number" id="credit-amount" step="0.01" required
+                                        class="w-full p-2.5 rounded bg-slate-950 border border-slate-700 text-sm focus:outline-none" />
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] text-slate-400 mb-1">Currency</label>
+                                    <select id="credit-currency"
+                                        class="w-full p-2.5 rounded bg-slate-950 border border-slate-700 text-sm focus:outline-none">
+                                        <option value="USDT">USDT</option>
+                                        <option value="NGN">NGN</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-slate-400 mb-1">TXID / Ref</label>
+                                <input type="text" id="credit-txid"
+                                    class="w-full p-2.5 rounded bg-slate-950 border border-slate-700 text-sm focus:outline-none"
+                                    placeholder="Auto if empty" />
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-slate-400 mb-1">Audit Note (Required)</label>
+                                <input type="text" id="credit-note" required
+                                    class="w-full p-2.5 rounded bg-slate-950 border border-slate-700 text-sm focus:outline-none"
+                                    placeholder="Reason..." />
+                            </div>
+                            <button type="submit"
+                                class="w-full py-2.5 bg-sky-500 hover:bg-sky-600 text-slate-950 font-bold rounded text-xs transition-colors">Credit
+                                Wallet</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Pending Deposits -->
+                <div class="bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-800 space-y-4">
+                    <h2 class="text-base sm:text-lg font-bold text-amber-400 border-b border-slate-800 pb-2">⏳ Pending
+                        Deposits</h2>
+                    <div id="pending-deposits-list"
+                        class="space-y-3 max-h-72 overflow-y-auto pr-1 text-[10px] sm:text-xs"></div>
+                </div>
+
+                <!-- Pending Withdrawals -->
+                <div class="bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-800 space-y-4">
+                    <h2 class="text-base sm:text-lg font-bold text-rose-400 border-b border-slate-800 pb-2">🏦 Pending
+                        Withdrawals</h2>
+                    <div id="pending-withdrawals-list"
+                        class="space-y-3 max-h-72 overflow-y-auto pr-1 text-[10px] sm:text-xs"></div>
+                </div>
+
+                <!-- Support Tickets -->
+                <div class="bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-800 space-y-4">
+                    <h2 class="text-base sm:text-lg font-bold text-purple-400 border-b border-slate-800 pb-2">🎧 Open
+                        Tickets</h2>
+                    <div id="admin-tickets-list" class="space-y-3 max-h-72 overflow-y-auto pr-1 text-[10px] sm:text-xs">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Individual Package Management -->
+        <div class="bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-800 space-y-4 mt-6">
+            <h2 class="text-base sm:text-lg font-bold text-indigo-400 border-b border-slate-800 pb-2">📦 Individual
+                Package Management</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                <!-- Standard Packages -->
+                <div>
+                    <h3 class="text-sm font-bold text-emerald-400 mb-3 flex items-center gap-2">
+                        <span>💎</span> Standard Packages
+                    </h3>
+                    <div id="admin-standard-packages-list" class="space-y-3 text-[10px] sm:text-xs"></div>
+                </div>
+                <!-- Hot Packages -->
+                <div>
+                    <h3 class="text-sm font-bold text-orange-400 mb-3 flex items-center gap-2">
+                        <span>🔥</span> Hot Packages (Sunday Deals)
+                    </h3>
+                    <div id="admin-hot-packages-list" class="space-y-3 text-[10px] sm:text-xs"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Management Section -->
+        <div class="bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-800 space-y-4 mt-6">
+            <h2 class="text-base sm:text-lg font-bold text-teal-400 border-b border-slate-800 pb-2">👥 User Management
+            </h2>
+            <div id="admin-users-list" class="space-y-3 max-h-96 overflow-y-auto pr-1 text-[10px] sm:text-xs"></div>
+        </div>
+    </div>
+    <!-- JS Logic -->
+    <script>
+        async function fetchPublicLandingStats() {
+            try {
+                const res = await fetch('/api/public/platform-stats');
+                const data = await res.json();
+
+                if (data.totalMembersCount) {
+                    const el = document.getElementById('public-total-members');
+                    if (el) el.innerText = data.totalMembersCount.toLocaleString();
+                }
+
+                if (data.recentPayouts && data.recentPayouts.length > 0) {
+                    const latest = data.recentPayouts[0];
+                    const obscuredName = latest.username ? latest.username.slice(0, 3) + '***' : 'User***';
+                    const elName = document.getElementById('public-recent-user');
+                    const elAmt = document.getElementById('public-recent-amount');
+                    if (elName) elName.innerText = obscuredName;
+                    if (elAmt) elAmt.innerText = `$${latest.amount.toFixed(2)}`;
+                }
+            } catch (err) {
+                console.error('Failed to load public stats:', err);
+            }
+        }
+
+        let currentUser = null;
+        let currentAuthMode = 'login';
+        let currentTxFilter = 'ALL';
+        let dashboardData = null;
+        let adminActiveUserId = null;
+        let dashboardRefreshInterval = null;
+
+        let token = localStorage.getItem('ltrix_token');
+        let role = localStorage.getItem('ltrix_role');
+        let currentView = localStorage.getItem('ltrix_view') || (role === 'SUPERADMIN' ? 'ADMIN' : 'USER');
+
+        function updateAdminPortalButtons() {
+            const userSwitchBtn = document.getElementById('user-switch-btn');
+            const adminSwitchBtn = document.getElementById('admin-switch-btn');
+
+            // Strictly show "🛡️ Admin Portal" ONLY if user has ADMIN or SUPERADMIN role
+            if (userSwitchBtn) {
+                if (role === 'ADMIN' || role === 'SUPERADMIN') {
+                    userSwitchBtn.classList.remove('hidden');
+                    userSwitchBtn.style.display = 'flex';
+                } else {
+                    userSwitchBtn.classList.add('hidden');
+                    userSwitchBtn.style.display = 'none';
+                }
+            }
+
+            // Only promoted ADMINs (who also have a user account) can switch back to User Dashboard
+            if (adminSwitchBtn) {
+                if (role === 'ADMIN') {
+                    adminSwitchBtn.classList.remove('hidden');
+                    adminSwitchBtn.style.display = 'block';
+                } else {
+                    adminSwitchBtn.classList.add('hidden');
+                    adminSwitchBtn.style.display = 'none';
+                }
+            }
+        }
+
+        // === CUSTOM NOTIFICATION SYSTEM ===
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+
+            let bgColor, borderColor, textColor, icon;
+            switch (type) {
+                case 'success': bgColor = 'bg-emerald-950/95'; borderColor = 'border-emerald-500/50'; textColor = 'text-emerald-100'; icon = '✅'; break;
+                case 'error': bgColor = 'bg-rose-950/95'; borderColor = 'border-rose-500/50'; textColor = 'text-rose-100'; icon = '❌'; break;
+                case 'warning': bgColor = 'bg-amber-950/95'; borderColor = 'border-amber-500/50'; textColor = 'text-amber-100'; icon = '⚠️'; break;
+                default: bgColor = 'bg-slate-900/95'; borderColor = 'border-slate-700'; textColor = 'text-slate-100'; icon = 'ℹ️';
+            }
+
+            toast.className = `pointer-events-auto flex items-start gap-3 p-4 rounded-xl shadow-2xl border ${bgColor} ${borderColor} ${textColor} w-full max-w-sm backdrop-blur-md toast-anim-enter`;
+            toast.innerHTML = `
+                <span class="text-lg shrink-0">${icon}</span>
+                <div class="flex-1 leading-snug break-words text-sm font-medium">${message}</div>
+                <button class="text-slate-400 hover:text-white shrink-0 mt-0.5 transition-colors" onclick="this.parentElement.remove()">✕</button>
+            `;
+
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.remove('toast-anim-enter');
+                toast.classList.add('toast-anim-leave');
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+
+        function customConfirm(title, messageHtml) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('custom-confirm-modal');
+                const btnOk = document.getElementById('confirm-btn-ok');
+                const btnCancel = document.getElementById('confirm-btn-cancel');
+
+                document.getElementById('confirm-title').innerText = title;
+                document.getElementById('confirm-message').innerHTML = messageHtml;
+
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+
+                const newBtnOk = btnOk.cloneNode(true);
+                const newBtnCancel = btnCancel.cloneNode(true);
+                btnOk.parentNode.replaceChild(newBtnOk, btnOk);
+                btnCancel.parentNode.replaceChild(newBtnCancel, btnCancel);
+
+                newBtnOk.onclick = () => { modal.classList.add('hidden'); modal.classList.remove('flex'); resolve(true); };
+                newBtnCancel.onclick = () => { modal.classList.add('hidden'); modal.classList.remove('flex'); resolve(false); };
+            });
+        }
+
+        function customPrompt(title, message) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('custom-prompt-modal');
+                const btnOk = document.getElementById('prompt-btn-ok');
+                const btnCancel = document.getElementById('prompt-btn-cancel');
+                const input = document.getElementById('prompt-input');
+
+                document.getElementById('prompt-title').innerText = title;
+                document.getElementById('prompt-message').innerText = message;
+                input.value = '';
+
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                input.focus();
+
+                const newBtnOk = btnOk.cloneNode(true);
+                const newBtnCancel = btnCancel.cloneNode(true);
+                btnOk.parentNode.replaceChild(newBtnOk, btnOk);
+                btnCancel.parentNode.replaceChild(newBtnCancel, btnCancel);
+
+                newBtnOk.onclick = () => { modal.classList.add('hidden'); modal.classList.remove('flex'); resolve(input.value); };
+                newBtnCancel.onclick = () => { modal.classList.add('hidden'); modal.classList.remove('flex'); resolve(null); };
+            });
+        }
+
+        // === URL REFERRAL CODE AUTO-POPULATION & INIT ===
+        (function initReferralAndAuth() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const refParam = urlParams.get('ref');
+            if (refParam) {
+                const refInput = document.getElementById('referralCode');
+                if (refInput) refInput.value = refParam.trim().toUpperCase();
+                if (!token) {
+                    toggleAuth('register');
+                }
+            }
+            fetchPublicLandingStats();
+        })();
+
+        if (token && role) {
+            showApp();
+        }
+
+        function switchView(view) {
+            // STRICT FRONTEND SECURITY CHECK
+            if (view === 'ADMIN' && role !== 'ADMIN' && role !== 'SUPERADMIN') {
+                return showToast('Access Denied: Admin role required.', 'error');
+            }
+            if (role === 'SUPERADMIN') {
+                view = 'ADMIN';
+            }
+            currentView = view;
+            localStorage.setItem('ltrix_view', currentView);
+            showApp();
+        }
+
+        function toggleAuth(mode) {
+            currentAuthMode = mode;
+            const loginTab = document.getElementById('tab-login');
+            const regTab = document.getElementById('tab-register');
+            const idField = document.getElementById('identifier-field');
+            const regFields = document.getElementById('register-fields');
+            const forgotLink = document.getElementById('forgot-password-link');
+
+            if (mode === 'login') {
+                loginTab.className = 'flex-1 py-2.5 rounded-lg bg-emerald-600 font-bold text-slate-950 text-sm transition-colors';
+                regTab.className = 'flex-1 py-2.5 rounded-lg bg-slate-800 text-slate-400 font-bold text-sm transition-colors';
+                idField.classList.remove('hidden');
+                regFields.classList.add('hidden');
+                if (forgotLink) forgotLink.classList.remove('hidden');
+            } else {
+                loginTab.className = 'flex-1 py-2.5 rounded-lg bg-slate-800 text-slate-400 font-bold text-sm transition-colors';
+                regTab.className = 'flex-1 py-2.5 rounded-lg bg-emerald-600 font-bold text-slate-950 text-sm transition-colors';
+                idField.classList.add('hidden');
+                regFields.classList.remove('hidden');
+                if (forgotLink) forgotLink.classList.add('hidden');
+            }
+        }
+
+        function openForgotPasswordModal() {
+            const modal = document.getElementById('forgot-password-modal');
+            const loginId = document.getElementById('identifier').value.trim();
+            if (loginId) {
+                document.getElementById('forgot-identifier').value = loginId;
+            }
+            document.getElementById('forgot-step-1').classList.remove('hidden');
+            document.getElementById('forgot-step-2').classList.add('hidden');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeForgotPasswordModal() {
+            const modal = document.getElementById('forgot-password-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.getElementById('forgot-otp').value = '';
+            document.getElementById('forgot-new-password').value = '';
+        }
+
+        function backToForgotStep1() {
+            document.getElementById('forgot-step-2').classList.add('hidden');
+            document.getElementById('forgot-step-1').classList.remove('hidden');
+        }
+
+        async function requestPasswordResetOtp(e) {
+            e.preventDefault();
+            const identifier = document.getElementById('forgot-identifier').value.trim();
+            if (!identifier) return showToast('Please enter your Email or Username.', 'warning');
+
+            const btn = document.getElementById('btn-send-otp');
+            btn.disabled = true;
+            btn.innerText = 'Sending...';
+
+            try {
+                const data = await apiCall('/api/auth/forgot-password', 'POST', { identifier });
+                showToast(data.message, 'success');
+                document.getElementById('forgot-step-2-msg').innerText = data.message;
+                document.getElementById('forgot-step-1').classList.add('hidden');
+                document.getElementById('forgot-step-2').classList.remove('hidden');
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = 'Send 6-Digit Code';
+            }
+        }
+
+        async function confirmPasswordReset(e) {
+            e.preventDefault();
+            const identifier = document.getElementById('forgot-identifier').value.trim();
+            const otp = document.getElementById('forgot-otp').value.trim();
+            const newPassword = document.getElementById('forgot-new-password').value;
+
+            const btn = document.getElementById('btn-reset-pw');
+            btn.disabled = true;
+            btn.innerText = 'Resetting...';
+
+            try {
+                const data = await apiCall('/api/auth/reset-password', 'POST', { identifier, otp, newPassword });
+                showToast(data.message, 'success');
+                document.getElementById('identifier').value = identifier;
+                closeForgotPasswordModal();
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = 'Reset Password';
+            }
+        }
+
+        async function handleAuth(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'Processing...';
+            btn.disabled = true;
+
+            const identifier = document.getElementById('identifier').value.trim();
+            const password = document.getElementById('password').value;
+
+            try {
+                if (currentAuthMode === 'login') {
+                    const res = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ identifier, password })
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Login failed');
+
+                    localStorage.setItem('ltrix_token', data.token);
+                    localStorage.setItem('ltrix_role', data.role);
+                    token = data.token;
+                    role = data.role;
+
+                    const savedView = localStorage.getItem('ltrix_view');
+                    if (role === 'SUPERADMIN') {
+                        currentView = 'ADMIN';
+                    } else if (role === 'ADMIN') {
+                        // Persist previous view choice if set, otherwise default to ADMIN on login
+                        currentView = (savedView === 'USER' || savedView === 'ADMIN') ? savedView : 'ADMIN';
+                    } else {
+                        currentView = 'USER';
+                    }
+                    localStorage.setItem('ltrix_view', currentView);
+
+                    showToast(`Welcome back, ${data.username}!`, 'success');
+                    showApp();
+                } else {
+                    const username = document.getElementById('username').value.trim();
+                    const email = document.getElementById('email').value.trim();
+                    const phone = document.getElementById('phone').value.trim();
+                    const referralCode = document.getElementById('referralCode').value.trim();
+
+                    const res = await fetch('/api/auth/register', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username, email, phone, password, referralCode })
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Registration failed');
+
+                    localStorage.setItem('ltrix_token', data.token);
+                    localStorage.setItem('ltrix_role', data.role);
+                    localStorage.setItem('ltrix_view', 'USER');
+                    token = data.token;
+                    role = data.role;
+                    currentView = 'USER';
+
+                    showToast('Account created successfully!', 'success');
+                    showApp();
+                }
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function showApp() {
+            document.getElementById('auth-screen').classList.add('hidden');
+
+            if (dashboardRefreshInterval) {
+                clearInterval(dashboardRefreshInterval);
+                dashboardRefreshInterval = null;
+            }
+
+            // FORCE SUPERADMIN TO ALWAYS STAY IN ADMIN VIEW
+            if (role === 'SUPERADMIN') {
+                currentView = 'ADMIN';
+            }
+
+            // STRICT FRONTEND SECURITY CHECK: Non-admins are forced to USER view
+            if (currentView === 'ADMIN' && role !== 'ADMIN' && role !== 'SUPERADMIN') {
+                currentView = 'USER';
+            }
+
+            localStorage.setItem('ltrix_view', currentView);
+            updateAdminPortalButtons();
+
+            if (currentView === 'ADMIN' && (role === 'ADMIN' || role === 'SUPERADMIN')) {
+                document.getElementById('app-screen').classList.add('hidden');
+                document.getElementById('admin-screen').classList.remove('hidden');
+                document.getElementById('admin-role-display').innerText = role === 'SUPERADMIN' ? 'Super Admin Access Granted' : 'Admin Access Granted';
+
+                loadAdminData();
+            } else {
+                document.getElementById('admin-screen').classList.add('hidden');
+                document.getElementById('app-screen').classList.remove('hidden');
+
+                loadDashboard();
+                dashboardRefreshInterval = setInterval(() => {
+                    if (token && currentView === 'USER') loadDashboard();
+                }, 30000);
+            }
+        }
+
+        function logout() {
+            if (dashboardRefreshInterval) {
+                clearInterval(dashboardRefreshInterval);
+                dashboardRefreshInterval = null;
+            }
+            localStorage.removeItem('ltrix_token');
+            localStorage.removeItem('ltrix_role');
+            localStorage.removeItem('ltrix_view');
+            token = null;
+            role = null;
+            currentView = 'USER';
+            updateAdminPortalButtons();
+            document.getElementById('app-screen').classList.add('hidden');
+            document.getElementById('admin-screen').classList.add('hidden');
+            document.getElementById('auth-screen').classList.remove('hidden');
+            fetchPublicLandingStats();
+            showToast('Logged out successfully.', 'info');
+        }
+
+        async function apiCall(endpoint, method = 'GET', body = null) {
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+
+            const config = { method, headers };
+            if (body) config.body = JSON.stringify(body);
+
+            const res = await fetch(endpoint, config);
+            const data = await res.json();
+
+            if (!res.ok) throw new Error(data.error || 'Something went wrong');
+            return data;
+        }
+
+        // ==========================================
+        // MEMBER DASHBOARD LOGIC
+        // ==========================================
+
+        async function loadDashboard() {
+            try {
+                const data = await apiCall('/api/dashboard');
+                dashboardData = data;
+                currentUser = data.user;
+                currentUser.withdrawalLimit = data.withdrawalLimit;
+
+                // Sync live role from database (handles live promotions/demotions without forcing a view jump)
+                if (data.user.role && data.user.role !== role) {
+                    role = data.user.role;
+                    localStorage.setItem('ltrix_role', role);
+                }
+                updateAdminPortalButtons();
+
+                document.getElementById('user-display').innerText = data.user.username;
+                document.getElementById('ref-code-display').innerText = data.user.referralCode;
+                document.getElementById('ref-link-input').value = window.location.origin + '/?ref=' + data.user.referralCode;
+
+                document.getElementById('stat-available').innerText = `$${data.user.availableBalance.toFixed(2)}`;
+                document.getElementById('stat-pending').innerText = `$${data.pendingIncome.toFixed(2)}`;
+                document.getElementById('stat-referral').innerText = `$${data.user.referralEarnings.toFixed(2)}`;
+                document.getElementById('stat-withdrawals').innerText = `$${(data.user.totalWithdrawals || 0).toFixed(2)}`;
+
+                if (data.user.usdtWithdrawalAddress) {
+                    const wdrAddrInput = document.getElementById('withdraw-usdt-address');
+                    if (!wdrAddrInput.value) {
+                        wdrAddrInput.value = data.user.usdtWithdrawalAddress;
+                    }
+                }
+
+                if (data.paymentSettings && data.paymentSettings.nairaExchangeRate) {
+                    document.getElementById('naira-rate-label').innerText = `$1 = ₦${Number(data.paymentSettings.nairaExchangeRate).toLocaleString()}`;
+                }
+                updateNairaEquivalent();
+
+                const withdrawBtn = document.querySelector('button[onclick="withdrawFunds()"]');
+                if (data.withdrawalLimit.limitReached) {
+                    withdrawBtn.disabled = true;
+                    withdrawBtn.innerHTML = `Limit Reached (Resets 00:00 UTC)`;
+                    withdrawBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    withdrawBtn.title = "You are limited to 1 withdrawal request per UTC day.";
+                } else {
+                    withdrawBtn.disabled = false;
+                    withdrawBtn.innerHTML = 'Request Withdrawal';
+                    withdrawBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    withdrawBtn.title = "";
+                }
+
+                document.getElementById('trans-reg-no').innerText = data.transparency.businessRegistrationNo;
+                document.getElementById('trans-budget').innerText = `$${data.transparency.verifiedPromotionalBudget.toFixed(2)}`;
+                document.getElementById('trans-members').innerText = data.transparency.totalMembersCount;
+                document.getElementById('trans-active-pkgs').innerText = data.transparency.totalActivePackagesCount;
+                document.getElementById('trans-withdrawals').innerText = `$${data.transparency.totalVerifiedWithdrawalsVolume.toFixed(2)}`;
+                document.getElementById('promo-budget-display').innerText = `$${data.weeklyRewards.verifiedPromotionalBudget.toFixed(2)}`;
+                document.getElementById('weekly-cycle-badge').innerText = data.weeklyRewards.weekKey;
+
+                document.getElementById('ref-count-total').innerText = data.referrals.length;
+                const eligibleRefs = data.referrals.filter(r => r.isEligible).length;
+                document.getElementById('ref-count-eligible').innerText = eligibleRefs;
+                const totalRefEarnings = data.referrals.reduce((s, r) => s + r.commissionGenerated, 0);
+                document.getElementById('ref-total-commission').innerText = `$${totalRefEarnings.toFixed(2)}`;
+
+                const refList = document.getElementById('referrals-list');
+                refList.innerHTML = data.referrals.map(r => `
+                    <div class="flex justify-between items-center bg-slate-800/50 p-2 rounded border border-slate-700">
+                        <div>
+                            <p class="font-bold text-white text-[10px]">${r.username}</p>
+                            <p class="text-[9px] text-slate-400">${new Date(r.createdAt).toLocaleDateString()}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="${r.isEligible ? 'text-emerald-400' : 'text-slate-500'}">${r.isEligible ? 'Active' : 'Inactive'}</p>
+                            <p class="text-[9px] text-sky-400">$${r.commissionGenerated.toFixed(2)}</p>
+                        </div>
+                    </div>
+                `).join('') || '<p class="text-slate-500 text-center">No referrals yet.</p>';
+
+                const builderCount = data.weeklyRewards.weeklyEligibleReferralsCount;
+                document.getElementById('builder-progress-text').innerText = `${Math.min(builderCount, 5)} / 5`;
+                document.getElementById('builder-progress-bar').style.width = `${Math.min((builderCount / 5) * 100, 100)}%`;
+                const btnBuilder = document.getElementById('btn-claim-builder');
+                if (data.weeklyRewards.builderClaimed) {
+                    btnBuilder.disabled = true; btnBuilder.innerText = 'Claimed'; btnBuilder.className = 'w-full py-2 rounded text-[10px] sm:text-xs font-bold bg-slate-700 text-slate-400 cursor-not-allowed';
+                } else if (builderCount >= 5) {
+                    btnBuilder.disabled = false; btnBuilder.innerText = 'Claim $15 Bonus'; btnBuilder.className = 'w-full py-2 rounded text-[10px] sm:text-xs font-bold bg-emerald-500 text-slate-950 hover:bg-emerald-600 transition-colors';
+                } else {
+                    btnBuilder.disabled = true; btnBuilder.innerText = 'Need 5 Referrals'; btnBuilder.className = 'w-full py-2 rounded text-[10px] sm:text-xs font-bold bg-slate-700 text-slate-400 cursor-not-allowed';
+                }
+
+                const leaderCount = data.weeklyRewards.weeklyEligibleReferralsCount;
+                document.getElementById('leader-progress-text').innerText = `${Math.min(leaderCount, 10)} / 10`;
+                document.getElementById('leader-progress-bar').style.width = `${Math.min((leaderCount / 10) * 100, 100)}%`;
+                const btnLeader = document.getElementById('btn-claim-leader');
+                if (data.weeklyRewards.leaderClaimed) {
+                    btnLeader.disabled = true; btnLeader.innerText = 'Claimed'; btnLeader.className = 'w-full py-2 rounded text-[10px] sm:text-xs font-bold bg-slate-700 text-slate-400 cursor-not-allowed';
+                } else if (leaderCount >= 10) {
+                    btnLeader.disabled = false; btnLeader.innerText = 'Claim $40 Bonus'; btnLeader.className = 'w-full py-2 rounded text-[10px] sm:text-xs font-bold bg-sky-500 text-slate-950 hover:bg-sky-600 transition-colors';
+                } else {
+                    btnLeader.disabled = true; btnLeader.innerText = 'Need 10 Referrals'; btnLeader.className = 'w-full py-2 rounded text-[10px] sm:text-xs font-bold bg-slate-700 text-slate-400 cursor-not-allowed';
+                }
+
+                const unreadCount = data.notifications.filter(n => !n.isRead).length;
+                const unreadBadge = document.getElementById('unread-badge');
+                if (unreadCount > 0) {
+                    unreadBadge.innerText = `${unreadCount}`;
+                    unreadBadge.classList.remove('hidden');
+                } else {
+                    unreadBadge.classList.add('hidden');
+                }
+
+                document.getElementById('notifications-list').innerHTML = data.notifications.map(n => `
+                    <div ${!n.isRead ? `onclick="markNotificationRead('${n._id}')"` : ''} class="p-2 rounded border ${n.isRead ? 'bg-slate-800/50 border-slate-700/50' : 'bg-slate-800 border-emerald-500/30 cursor-pointer hover:border-emerald-500/60 transition-colors'}">
+                        <div class="flex justify-between items-start gap-2">
+                            <p class="font-bold ${n.isRead ? 'text-slate-300' : 'text-emerald-400'}">${n.title}</p>
+                            ${!n.isRead ? '<span class="text-[8px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded shrink-0">Unread</span>' : ''}
+                        </div>
+                        <p class="text-slate-400 mt-0.5">${n.message}</p>
+                        <p class="text-[9px] text-slate-500 mt-1">${new Date(n.createdAt).toLocaleString()}</p>
+                    </div>
+                `).join('') || '<p class="text-slate-500 text-center">No notifications.</p>';
+
+                const buildPkgCard = (p, isHot) => {
+                    const isLocked = p.isLocked || (isHot && !data.hotWindow.isOpen);
+                    const slotsLeft = p.totalSlots - p.slotsClaimed;
+                    const isSoldOut = isHot && slotsLeft <= 0;
+                    const canBuy = !isLocked && !isSoldOut;
+
+                    return `
+                        <div class="bg-slate-950 p-3 sm:p-4 rounded-xl border ${isHot ? 'border-orange-500/30' : 'border-slate-800'} flex flex-col justify-between space-y-2 sm:space-y-3">
+                            <div>
+                                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1">
+                                    <p class="text-[10px] font-bold ${isHot ? 'text-orange-400' : 'text-emerald-400'}">${isHot ? '🔥 HOT' : 'STD'}</p>
+                                    ${isHot ? `<span class="text-[9px] bg-orange-500/20 text-orange-300 px-1.5 py-0.5 rounded">${slotsLeft} Left</span>` : ''}
+                                </div>
+                                <p class="text-lg sm:text-2xl font-extrabold text-white mt-1">$${p.price}</p>
+                                <p class="text-[9px] sm:text-[11px] text-slate-400 mt-1">Daily: <strong class="text-emerald-400">$${p.dailyIncome}</strong></p>
+                                <p class="text-[9px] sm:text-[11px] text-slate-400">Dur: <strong class="text-white">${p.durationDays}d</strong></p>
+                                <p class="text-[9px] sm:text-[11px] text-slate-400">Total: <strong class="text-amber-400">$${p.totalPayout}</strong></p>
+                            </div>
+                            <button onclick="purchasePackage('${p._id}')" ${!canBuy ? 'disabled' : ''}
+                                class="w-full py-1.5 sm:py-2 rounded-lg font-bold text-[10px] sm:text-xs transition-colors ${canBuy ? (isHot ? 'bg-orange-500 hover:bg-orange-600 text-slate-950' : 'bg-emerald-500 hover:bg-emerald-600 text-slate-950') : 'bg-slate-800 text-slate-500 cursor-not-allowed'}">
+                                ${isSoldOut ? 'Sold Out' : isLocked ? 'Locked' : 'Activate'}
+                            </button>
+                        </div>
+                    `;
+                };
+
+                document.getElementById('packages-grid').innerHTML = data.standardPlans.map(p => buildPkgCard(p, false)).join('');
+                document.getElementById('hot-packages-grid').innerHTML = data.hotPlans.map(p => buildPkgCard(p, true)).join('');
+
+                const hotBadge = document.getElementById('hot-window-badge');
+                const hotCountdown = document.getElementById('hot-window-countdown');
+                if (data.hotWindow.isOpen) {
+                    hotBadge.innerText = '🔥 WINDOW OPEN';
+                    hotBadge.className = 'text-[10px] font-bold uppercase text-emerald-400';
+                    hotCountdown.innerText = 'Closing Soon!';
+                } else {
+                    hotBadge.innerText = 'CLOSED';
+                    hotBadge.className = 'text-[10px] font-bold uppercase text-rose-400';
+                    hotCountdown.innerText = 'Opens Sun 9AM';
+                }
+
+                document.getElementById('active-packages-list').innerHTML = data.activePackages.map(p => {
+                    const nextPayout = new Date(p.nextPayoutAt);
+                    const now = new Date();
+                    const diffMs = nextPayout - now;
+                    let timeStr = 'Completed';
+                    if (p.status === 'ACTIVE') {
+                        if (diffMs > 0) {
+                            const hrs = Math.floor(diffMs / (1000 * 60 * 60));
+                            const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                            timeStr = `${hrs}h ${mins}m`;
+                        } else {
+                            timeStr = 'Pending...';
+                        }
+                    }
+                    return `
+                        <div class="bg-slate-800/50 p-2.5 sm:p-3 rounded-lg border border-slate-700 flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+                            <div>
+                                <p class="font-bold text-white text-[10px] sm:text-xs">${p.category === 'HOT' ? '🔥 HOT' : 'STD'} $${p.price} Pkg</p>
+                                <p class="text-slate-400 text-[9px] sm:text-[11px]">Day ${p.daysCredited}/${p.durationDays} • $${p.dailyIncome}/day</p>
+                            </div>
+                            <div class="text-left sm:text-right">
+                                <p class="text-[9px] text-slate-400 uppercase">Next Payout</p>
+                                <p class="font-bold text-[10px] sm:text-xs ${p.status === 'ACTIVE' ? 'text-emerald-400' : 'text-slate-500'}">${timeStr}</p>
+                            </div>
+                        </div>
+                    `;
+                }).join('') || '<p class="text-slate-500 text-center text-xs">No active packages.</p>';
+
+                window.allTransactions = data.transactions;
+                renderTransactions();
+
+                if (data.pendingUsdtDeposit) {
+                    document.getElementById('recharge-step-1').classList.add('hidden');
+                    document.getElementById('recharge-step-2').classList.remove('hidden');
+                    document.getElementById('recharge-exact-amount').innerText = `${data.pendingUsdtDeposit.adjustedAmount.toFixed(3)} USDT`;
+                    document.getElementById('recharge-base-Breakdown').innerText = `Base: $${data.pendingUsdtDeposit.requestedAmount.toFixed(2)} | Offset: +${data.pendingUsdtDeposit.decimalOffset.toFixed(3)}`;
+                    document.getElementById('display-address').innerText = data.paymentSettings.usdtBep20Address;
+                    document.getElementById('display-usdt-ref').innerText = data.pendingUsdtDeposit.reference;
+                    document.getElementById('display-confirmations').innerText = `${data.paymentSettings.usdtConfirmations} Confirms`;
+                } else {
+                    document.getElementById('recharge-step-1').classList.remove('hidden');
+                    document.getElementById('recharge-step-2').classList.add('hidden');
+                }
+
+                if (data.pendingNairaDeposit) {
+                    document.getElementById('naira-step-1').classList.add('hidden');
+                    document.getElementById('naira-bank-details-card').classList.remove('hidden');
+                    document.getElementById('naira-req-status-badge').innerText = data.pendingNairaDeposit.status;
+                    document.getElementById('ngn-ref-display').innerText = data.pendingNairaDeposit.reference;
+                    document.getElementById('ngn-amount-display').innerText = `₦${data.pendingNairaDeposit.nairaRequestedAmount.toLocaleString()}`;
+                    document.getElementById('ngn-usd-equiv-display').innerText = `($${data.pendingNairaDeposit.amount.toFixed(2)})`;
+
+                    const bankDetails = data.pendingNairaDeposit.assignedBankDetails || {
+                        bankName: data.paymentSettings.nairaBankName || 'Unavailable',
+                        accountNumber: data.paymentSettings.nairaBankAccountNumber || 'Unavailable',
+                        accountName: data.paymentSettings.nairaBankAccountName || 'Unavailable'
+                    };
+
+                    document.getElementById('ngn-bank-name').innerText = bankDetails.bankName;
+                    document.getElementById('ngn-bank-acc-num').innerText = bankDetails.accountNumber;
+                    document.getElementById('ngn-bank-acc-name').innerText = bankDetails.accountName;
+                    document.getElementById('ngn-bank-instructions').innerText = data.paymentSettings.nairaBankInstructions;
+
+                    if (data.pendingNairaDeposit.status === 'PROCESSING') {
+                        document.getElementById('ngn-confirm-controls').classList.add('hidden');
+                    } else {
+                        document.getElementById('ngn-confirm-controls').classList.remove('hidden');
+                    }
+                } else {
+                    document.getElementById('naira-step-1').classList.remove('hidden');
+                    document.getElementById('naira-bank-details-card').classList.add('hidden');
+                }
+
+                document.getElementById('support-tickets-list').innerHTML = data.tickets.map(t => `
+                    <div class="bg-slate-800/50 p-2 rounded border border-slate-700">
+                        <div class="flex justify-between">
+                            <p class="font-bold text-white text-[10px]">${t.subject}</p>
+                            <span class="text-[9px] font-bold ${t.status === 'OPEN' ? 'text-amber-400' : 'text-emerald-400'}">${t.status}</span>
+                        </div>
+                        <p class="text-slate-400 mt-1 truncate">${t.message}</p>
+                        ${t.adminReply ? `<p class="text-emerald-400 mt-1 border-t border-slate-700 pt-1 text-[9px]">Reply: ${t.adminReply}</p>` : ''}
+                    </div>
+                `).join('') || '<p class="text-slate-500 text-center">No tickets.</p>';
+
+            } catch (err) {
+                showToast(err.message, 'error');
+                if (err.message === 'Invalid or expired token' || err.message === 'Authentication required' || err.message.includes('suspended') || err.message.includes('locked') || err.message.includes('Admin account cannot access member dashboard')) {
+                    logout();
+                }
+            }
+        }
+
+        function setTxFilter(filter) {
+            currentTxFilter = filter;
+            ['ALL', 'DEPOSIT', 'WITHDRAWAL', 'DAILY_INCOME', 'REWARDS'].forEach(f => {
+                const btn = document.getElementById(`tx-tab-${f}`);
+                if (f === filter) {
+                    btn.className = 'whitespace-nowrap px-3 py-1.5 rounded bg-emerald-500 text-slate-950 font-bold transition-colors';
+                } else {
+                    btn.className = 'whitespace-nowrap px-3 py-1.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors';
+                }
+            });
+            renderTransactions();
+        }
+
+        function renderTransactions() {
+            if (!window.allTransactions) return;
+
+            let filtered = window.allTransactions;
+            if (currentTxFilter !== 'ALL') {
+                if (currentTxFilter === 'REWARDS') {
+                    filtered = filtered.filter(t => t.type === 'REFERRAL_BONUS' || t.type === 'WEEKLY_REWARD');
+                } else {
+                    filtered = filtered.filter(t => t.type === currentTxFilter);
+                }
+            }
+
+            document.getElementById('transactions-list').innerHTML = filtered.map(t => {
+                const isPositive = ['DEPOSIT', 'DAILY_INCOME', 'REFERRAL_BONUS', 'WEEKLY_REWARD'].includes(t.type);
+                const color = isPositive ? 'text-emerald-400' : 'text-rose-400';
+                const sign = isPositive ? '+' : '';
+                return `
+                    <div class="flex flex-col sm:flex-row justify-between sm:items-start bg-slate-800/50 p-2 rounded border border-slate-700 gap-1">
+                        <div>
+                            <p class="font-bold text-white text-[10px]">${t.type.replace('_', ' ')}</p>
+                            <p class="text-slate-400 text-[9px] mt-0.5 max-w-[200px] truncate" title="${t.description}">${t.description}</p>
+                            <p class="text-[8px] text-slate-500 mt-1">${new Date(t.createdAt).toLocaleString()} • ${t.status}</p>
+                        </div>
+                        <div class="text-left sm:text-right shrink-0">
+                            <p class="font-bold ${color} font-mono text-[10px]">${sign}$${t.amount.toFixed(3)}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('') || '<p class="text-slate-500 text-center text-xs">No transactions found.</p>';
+        }
+
+        async function markAllNotificationsRead() {
+            try {
+                await apiCall('/api/notifications/read-all', 'POST');
+                loadDashboard();
+                showToast('Notifications marked read.', 'info');
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function markNotificationRead(id) {
+            try {
+                await apiCall(`/api/notifications/${id}/read`, 'PATCH');
+                loadDashboard();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        function switchDepositMethod(method) {
+            const tabUsdt = document.getElementById('tab-dep-usdt');
+            const tabNgn = document.getElementById('tab-dep-ngn');
+            const paneUsdt = document.getElementById('deposit-pane-usdt');
+            const paneNgn = document.getElementById('deposit-pane-ngn');
+
+            if (method === 'USDT') {
+                tabUsdt.className = 'flex-1 sm:flex-none px-3 py-2 rounded bg-emerald-500 text-slate-950 font-bold transition-colors';
+                tabNgn.className = 'flex-1 sm:flex-none px-3 py-2 rounded text-slate-400 hover:text-white transition-colors';
+                paneUsdt.classList.remove('hidden');
+                paneNgn.classList.add('hidden');
+            } else {
+                tabNgn.className = 'flex-1 sm:flex-none px-3 py-2 rounded bg-emerald-500 text-slate-950 font-bold transition-colors';
+                tabUsdt.className = 'flex-1 sm:flex-none px-3 py-2 rounded text-slate-400 hover:text-white transition-colors';
+                paneNgn.classList.remove('hidden');
+                paneUsdt.classList.add('hidden');
+            }
+        }
+
+        function updateNairaEquivalent() {
+            const rate = dashboardData?.paymentSettings?.nairaExchangeRate || 1500;
+            const usd = parseFloat(document.getElementById('naira-usd-amount').value) || 0;
+            document.getElementById('naira-calculated-display').value = `₦${(usd * rate).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+            ['10', '20', '50', '100'].forEach(amt => {
+                const el = document.getElementById(`ex-${amt}`);
+                if (el) el.innerText = `₦${(parseInt(amt) * rate).toLocaleString()}`;
+            });
+        }
+
+        async function createNairaDepositRequest() {
+            const usdAmount = parseFloat(document.getElementById('naira-usd-amount').value);
+            if (!usdAmount || usdAmount < 5) return showToast('Minimum deposit is $5.00 USD.', 'error');
+
+            try {
+                const btn = document.querySelector('button[onclick="createNairaDepositRequest()"]');
+                btn.disabled = true; btn.innerHTML = 'Processing...';
+
+                const data = await apiCall('/api/wallet/naira-deposit-request', 'POST', { usdAmount });
+                showToast('NGN Deposit Request Created!', 'success');
+                loadDashboard();
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                const btn = document.querySelector('button[onclick="createNairaDepositRequest()"]');
+                if (btn) { btn.disabled = false; btn.innerHTML = 'Proceed to Bank Transfer Details'; }
+            }
+        }
+
+        async function confirmNairaTransferSent() {
+            const senderInfo = document.getElementById('ngn-sender-ref').value.trim();
+            if (!senderInfo) return showToast('Please enter Sender Name or Session ID.', 'error');
+
+            try {
+                const btn = document.querySelector('button[onclick="confirmNairaTransferSent()"]');
+                btn.disabled = true; btn.innerHTML = 'Submitting...';
+
+                const data = await apiCall('/api/wallet/naira-deposit-confirm', 'POST', { senderInfo });
+                showToast(data.message, 'success');
+                document.getElementById('ngn-sender-ref').value = '';
+                loadDashboard();
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                const btn = document.querySelector('button[onclick="confirmNairaTransferSent()"]');
+                if (btn) { btn.disabled = false; btn.innerHTML = 'I Have Sent the Transfer'; }
+            }
+        }
+
+        async function cancelNairaDepositRequest() {
+            const proceed = await customConfirm('Cancel NGN Deposit', 'Are you sure you want to cancel this pending NGN deposit?');
+            if (!proceed) return;
+            try {
+                const data = await apiCall('/api/wallet/naira-deposit-cancel', 'POST');
+                showToast(data.message, 'info');
+                loadDashboard();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function generateUsdtDepositRequest() {
+            const amount = parseFloat(document.getElementById('recharge-amount').value);
+            if (!amount || amount < 5) {
+                return showToast('Minimum USDT deposit is $5.00 USDT.', 'error');
+            }
+
+            try {
+                const btn = document.getElementById('btn-next-step');
+                btn.disabled = true; btn.innerHTML = 'Generating...';
+
+                const data = await apiCall('/api/wallet/usdt-deposit-request', 'POST', { amount });
+                showToast('Request generated. Send EXACT amount.', 'info');
+                loadDashboard();
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                const btn = document.getElementById('btn-next-step');
+                btn.disabled = false; btn.innerHTML = 'Next Step — Generate Payment Amount';
+            }
+        }
+
+        async function cancelUsdtDepositRequest() {
+            const proceed = await customConfirm('Cancel USDT Deposit', 'Are you sure you want to cancel this pending USDT deposit request?');
+            if (!proceed) return;
+            try {
+                const data = await apiCall('/api/wallet/usdt-deposit-request/cancel', 'POST');
+                showToast(data.message, 'info');
+                document.getElementById('recharge-amount').value = '';
+                loadDashboard();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function handleRecharge() {
+            const txid = document.getElementById('recharge-txid').value.trim();
+            if (!txid) return showToast('Please enter the BEP20 TXID.', 'error');
+
+            try {
+                const btn = document.getElementById('btn-i-have-paid');
+                btn.disabled = true; btn.innerHTML = 'Verifying...';
+
+                const data = await apiCall('/api/wallet/deposit-usdt', 'POST', { txid });
+                showToast(data.message, 'success');
+                document.getElementById('recharge-amount').value = '';
+                document.getElementById('recharge-txid').value = '';
+                loadDashboard();
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                const btn = document.getElementById('btn-i-have-paid');
+                btn.disabled = false; btn.innerHTML = 'I Have Paid — Verify TXID';
+            }
+        }
+
+        async function saveDefaultWithdrawalAddress() {
+            const address = document.getElementById('withdraw-usdt-address').value.trim();
+            if (!address || !address.match(/^0x[a-fA-F0-9]{40}$/)) {
+                return showToast('Invalid USDT (BEP20) address.', 'error');
+            }
+            try {
+                const data = await apiCall('/api/wallet/withdrawal-address', 'PUT', { usdtWithdrawalAddress: address });
+                showToast(data.message, 'success');
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        function updateWithdrawalBreakdown() {
+            const amt = parseFloat(document.getElementById('withdraw-amount').value) || 0;
+            const fee = amt * 0.05;
+            const net = amt - fee;
+            document.getElementById('wdr-fee-preview').innerText = `-$${fee.toFixed(2)}`;
+            document.getElementById('wdr-net-preview').innerText = `${net.toFixed(2)} USDT`;
+        }
+
+        async function withdrawFunds() {
+            if (currentUser && currentUser.withdrawalLimit && currentUser.withdrawalLimit.limitReached) {
+                const resetTime = new Date(currentUser.withdrawalLimit.resetsAt).toISOString().replace('T', ' ').substring(0, 19);
+                return showToast(`Limit reached. Next available after ${resetTime} UTC.`, 'warning');
+            }
+
+            const amount = parseFloat(document.getElementById('withdraw-amount').value);
+            const address = document.getElementById('withdraw-usdt-address').value.trim();
+
+            if (!amount || amount < 5) {
+                return showToast('Minimum withdrawal is $5.00 USDT.', 'error');
+            }
+            if (!address || !address.match(/^0x[a-fA-F0-9]{40}$/)) {
+                return showToast('Invalid USDT (BEP20) address.', 'error');
+            }
+
+            const btn = document.querySelector('button[onclick="withdrawFunds()"]');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = 'Processing...';
+
+            try {
+                const data = await apiCall('/api/wallet/withdraw', 'POST', { amount, usdtAddress: address });
+                showToast(data.message, 'success');
+                document.getElementById('withdraw-amount').value = '';
+                updateWithdrawalBreakdown();
+                loadDashboard();
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                if (currentUser && currentUser.withdrawalLimit && currentUser.withdrawalLimit.limitReached) {
+                    btn.disabled = true;
+                    btn.innerHTML = `Limit Reached`;
+                }
+            }
+        }
+
+        async function purchasePackage(planId) {
+            const proceed = await customConfirm('Activate Package', 'Are you sure you want to purchase this package?');
+            if (!proceed) return;
+            try {
+                const data = await apiCall('/api/packages/purchase', 'POST', { planId });
+                showToast(data.message, 'success');
+                loadDashboard();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function claimWeeklyReward(tier) {
+            try {
+                const data = await apiCall('/api/rewards/claim-weekly', 'POST', { tier });
+                showToast(data.message, 'success');
+                loadDashboard();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function submitTicket(e) {
+            e.preventDefault();
+            const category = document.getElementById('ticket-category').value;
+            const subject = document.getElementById('ticket-subject').value.trim();
+            const message = document.getElementById('ticket-message').value.trim();
+
+            try {
+                const btn = e.target.querySelector('button[type="submit"]');
+                btn.disabled = true; btn.innerHTML = 'Submitting...';
+
+                const data = await apiCall('/api/support/ticket', 'POST', { category, subject, message });
+                showToast(data.message, 'success');
+                document.getElementById('ticket-subject').value = '';
+                document.getElementById('ticket-message').value = '';
+                loadDashboard();
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                const btn = e.target.querySelector('button[type="submit"]');
+                btn.disabled = false; btn.innerHTML = 'Submit Ticket';
+            }
+        }
+
+        function switchSupportTab(tab) {
+            const btnTicket = document.getElementById('sup-tab-ticket');
+            const btnFaq = document.getElementById('sup-tab-faq');
+            const paneTicket = document.getElementById('support-ticket-pane');
+            const paneFaq = document.getElementById('support-faq-pane');
+
+            if (tab === 'TICKET') {
+                btnTicket.className = 'px-3 py-1.5 rounded bg-sky-500 text-slate-950 font-bold transition-colors';
+                btnFaq.className = 'px-3 py-1.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors';
+                paneTicket.classList.remove('hidden');
+                paneFaq.classList.add('hidden');
+            } else {
+                btnFaq.className = 'px-3 py-1.5 rounded bg-sky-500 text-slate-950 font-bold transition-colors';
+                btnTicket.className = 'px-3 py-1.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors';
+                paneFaq.classList.remove('hidden');
+                paneTicket.classList.add('hidden');
+            }
+        }
+
+        function copyReferralLink() {
+            const refCode = document.getElementById('ref-code-display').innerText;
+            const link = `${window.location.origin}/?ref=${refCode}`;
+            navigator.clipboard.writeText(link);
+            showToast('Referral link copied!', 'success');
+        }
+
+        function copyTextById(id) {
+            const text = document.getElementById(id).innerText;
+            navigator.clipboard.writeText(text);
+            showToast('Copied to clipboard!', 'success');
+        }
+
+        function exportTransactionsCSV() {
+            if (!window.allTransactions || window.allTransactions.length === 0) {
+                return showToast('No transactions to export.', 'warning');
+            }
+            const headers = ['Date', 'Type', 'Description', 'Amount', 'Status'];
+            const rows = window.allTransactions.map(t => [
+                new Date(t.createdAt).toISOString(),
+                t.type,
+                `"${t.description.replace(/"/g, '""')}"`,
+                t.amount.toFixed(3),
+                t.status
+            ]);
+            const csvContent = "data:text/csv;charset=utf-8," + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `ltrix_transactions_${Date.now()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast('Transactions exported.', 'success');
+        }
+
+        // ==========================================
+        // ADMIN DASHBOARD LOGIC
+        // ==========================================
+
+        async function loadAdminData() {
+            try {
+                const data = await apiCall('/api/admin/overview');
+
+                document.getElementById('set-usdt-enabled').value = data.settings.usdtEnabled.toString();
+                document.getElementById('set-usdt-address').value = data.settings.usdtBep20Address;
+                document.getElementById('set-usdt-conf').value = data.settings.usdtConfirmations;
+                document.getElementById('set-ngn-enabled').value = data.settings.nairaDepositEnabled.toString();
+                document.getElementById('set-ngn-rate').value = data.settings.nairaExchangeRate;
+                document.getElementById('set-ngn-instructions').value = data.settings.nairaBankInstructions || '';
+
+                document.getElementById('hot-force-toggle').checked = data.hotWindow.forceHotWindowOpen;
+                document.getElementById('admin-promo-budget').innerText = `$${data.settings.verifiedPromotionalBudget.toFixed(2)}`;
+
+                renderAdminBankAccounts(data.settings.nairaBankAccounts || []);
+
+                document.getElementById('pending-deposits-list').innerHTML = data.deposits.filter(d => ['PENDING', 'PROCESSING'].includes(d.status)).map(d => `
+                    <div class="bg-slate-950 p-3 rounded border border-slate-800 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                        <div>
+                            <p class="font-bold text-white text-[11px]">${d.userId?.username || 'Unknown'} <span class="text-[9px] text-slate-500">(${d.reference})</span></p>
+                            <p class="text-slate-400 mt-0.5 text-[10px]">${d.description}</p>
+                            <p class="text-amber-400 mt-1 font-mono text-[10px]">Requested: $${d.amount.toFixed(2)}</p>
+                        </div>
+                        <div class="flex flex-row sm:flex-col gap-1.5 shrink-0">
+                            <button onclick="processDeposit('${d._id}', 'APPROVE')" class="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold rounded text-[10px]">Approve</button>
+                            <button onclick="processDeposit('${d._id}', 'REJECT')" class="px-3 py-1.5 bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30 font-bold rounded text-[10px]">Reject</button>
+                        </div>
+                    </div>
+                `).join('') || '<p class="text-slate-500 text-center py-2">No pending deposits.</p>';
+
+                document.getElementById('pending-withdrawals-list').innerHTML = data.pendingWithdrawals.map(w => `
+                    <div class="bg-slate-950 p-3 rounded border border-slate-800 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                        <div>
+                            <p class="font-bold text-white text-[11px]">${w.userId?.username || 'Unknown'} <span class="text-[9px] text-slate-500">(${w.reference})</span></p>
+                            <p class="text-slate-400 mt-0.5 text-[9px] break-all">To: ${w.withdrawalAddress || w.userId?.usdtWithdrawalAddress || 'N/A'}</p>
+                            <p class="text-white mt-1 font-mono text-[10px]">Amt: $${w.amount.toFixed(2)} | Net: ${(w.amount - w.fee).toFixed(2)} USDT</p>
+                        </div>
+                        <div class="flex flex-row sm:flex-col gap-1.5 shrink-0">
+                            <button onclick="processWithdrawal('${w._id}', 'APPROVE')" class="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold rounded text-[10px]">Approve</button>
+                            <button onclick="processWithdrawal('${w._id}', 'REJECT')" class="px-3 py-1.5 bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30 font-bold rounded text-[10px]">Reject</button>
+                        </div>
+                    </div>
+                `).join('') || '<p class="text-slate-500 text-center py-2">No pending withdrawals.</p>';
+
+                document.getElementById('admin-tickets-list').innerHTML = data.tickets.filter(t => t.status === 'OPEN').map(t => `
+                    <div class="bg-slate-950 p-3 rounded border border-slate-800 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                        <div>
+                            <p class="font-bold text-white text-[11px]">${t.subject} <span class="text-[9px] text-slate-500">(${t.ticketRef})</span></p>
+                            <p class="text-slate-400 mt-0.5 text-[10px]">${t.message}</p>
+                            <p class="text-slate-500 mt-1 text-[9px]">${new Date(t.createdAt).toLocaleString()}</p>
+                        </div>
+                        <button onclick="replyTicket('${t._id}', '${t.ticketRef}')" class="px-3 py-1.5 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded text-[10px] shrink-0">Reply</button>
+                    </div>
+                `).join('') || '<p class="text-slate-500 text-center py-2">No open tickets.</p>';
+
+                // Render Standard Packages
+                document.getElementById('admin-standard-packages-list').innerHTML = data.standardPlans.map(p => `
+                    <div class="bg-slate-950 p-3 rounded border border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                        <div>
+                            <p class="font-bold text-white text-[11px] sm:text-xs">$${p.price} Package</p>
+                            <p class="text-slate-400 text-[10px] sm:text-[11px]">Daily: $${p.dailyIncome} | ${p.durationDays} Days</p>
+                            <p class="text-amber-400 mt-1 text-[10px]">Limit: ${p.purchaseLimit} per user</p>
+                        </div>
+                        <div class="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                            <span class="${p.isLocked ? 'text-rose-400 font-bold' : 'text-emerald-400 font-bold'} text-[10px] sm:text-xs">${p.isLocked ? 'Locked' : 'Unlocked'}</span>
+                            <div class="flex gap-1">
+                                <button onclick="togglePackageLock('${p._id}', ${p.isLocked})" class="px-2.5 py-1.5 ${p.isLocked ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30'} rounded text-[10px] font-bold transition-colors">
+                                    ${p.isLocked ? 'Unlock' : 'Lock'}
+                                </button>
+                                <button onclick="editPackageLimit('${p._id}', ${p.purchaseLimit})" class="px-2.5 py-1.5 bg-slate-800 text-slate-300 hover:bg-slate-700 rounded text-[10px] border border-slate-700 transition-colors">Edit Limit</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Render Hot Packages
+                document.getElementById('admin-hot-packages-list').innerHTML = data.hotPlans.map(p => `
+                    <div class="bg-slate-950 p-3 rounded border border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                        <div>
+                            <p class="font-bold text-white text-[11px] sm:text-xs">$${p.price} Package</p>
+                            <p class="text-slate-400 text-[10px] sm:text-[11px]">Daily: $${p.dailyIncome} | ${p.durationDays} Days</p>
+                            <p class="text-amber-400 mt-1 text-[10px]">Limit: ${p.purchaseLimit} per user</p>
+                            <p class="text-sky-400 mt-0.5 text-[10px]">Slots: ${p.slotsClaimed} / ${p.totalSlots}</p>
+                        </div>
+                        <div class="flex flex-col gap-1.5 w-full sm:w-auto">
+                            <div class="flex items-center justify-between sm:justify-end gap-2">
+                                <span class="${p.isLocked ? 'text-rose-400 font-bold' : 'text-emerald-400 font-bold'} text-[10px] sm:text-xs">${p.isLocked ? 'Locked' : 'Unlocked'}</span>
+                                <button onclick="togglePackageLock('${p._id}', ${p.isLocked})" class="px-2.5 py-1 ${p.isLocked ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30'} rounded text-[10px] font-bold transition-colors">
+                                    ${p.isLocked ? 'Unlock' : 'Lock'}
+                                </button>
+                            </div>
+                            <div class="flex gap-1 mt-1">
+                                <button onclick="editHotPackage('${p._id}', ${p.purchaseLimit}, ${p.totalSlots})" class="flex-1 px-2 py-1 bg-slate-800 text-slate-300 hover:bg-slate-700 rounded text-[10px] border border-slate-700 transition-colors">Edit</button>
+                                <button onclick="resetPackageSlots('${p._id}')" class="flex-1 px-2 py-1 bg-orange-500/20 text-orange-300 border border-orange-500/30 hover:bg-orange-500/30 rounded text-[10px] transition-colors">Reset Slots</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Render Users
+                const currentAdminRole = localStorage.getItem('ltrix_role');
+                document.getElementById('admin-users-list').innerHTML = data.users.map(u => {
+                    const isSuper = u.role === 'SUPERADMIN';
+                    return `
+                        <div class="bg-slate-950 p-3 rounded border border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                            <div>
+                                <p class="font-bold text-white text-[11px] sm:text-xs">${u.username} <span class="text-[9px] text-slate-500">(${u.email}) • Bal: $${(u.availableBalance || 0).toFixed(2)}</span></p>
+                                <p class="text-[10px] mt-0.5">Role: <strong class="${isSuper ? 'text-purple-400' : (u.role === 'ADMIN' ? 'text-emerald-400' : 'text-slate-300')}">${u.role}</strong></p>
+                                <p class="text-[10px]">Status: <strong class="${u.status === 'ACTIVE' ? 'text-emerald-400' : (u.status === 'SUSPENDED' ? 'text-amber-400' : 'text-rose-400')}">${u.status === 'LOCKED' ? 'LOCKED (W/D)' : u.status}</strong></p>
+                            </div>
+                            <div class="flex flex-wrap gap-1.5 w-full sm:w-auto justify-start sm:justify-end">
+                                ${!isSuper ? `
+                                    <button onclick="rewardUser('${u._id}', '${u.username}')" class="px-2 py-1 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 transition-colors">
+                                        + Reward
+                                    </button>
+                                    <button onclick="updateUserStatus('${u._id}', '${u.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE'}')" class="px-2 py-1 rounded text-[9px] font-bold ${u.status === 'ACTIVE' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30'} transition-colors">
+                                        ${u.status === 'ACTIVE' ? 'Suspend' : 'Activate'}
+                                    </button>
+                                    <button onclick="updateUserStatus('${u._id}', '${u.status === 'LOCKED' ? 'ACTIVE' : 'LOCKED'}')" class="px-2 py-1 rounded text-[9px] font-bold ${u.status === 'LOCKED' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30' : 'bg-slate-500/20 text-slate-300 border border-slate-500/30 hover:bg-slate-500/30'} transition-colors">
+                                        ${u.status === 'LOCKED' ? 'Unlock W/D' : 'Lock W/D'}
+                                    </button>
+                                    <button onclick="deleteUser('${u._id}', '${u.username}')" class="px-2 py-1 rounded text-[9px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30 transition-colors">
+                                        Delete
+                                    </button>
+                                ` : '<span class="text-[9px] text-purple-400 italic">Protected Account</span>'}
+                                
+                                ${currentAdminRole === 'SUPERADMIN' && !isSuper ? `
+                                    <button onclick="updateUserRole('${u._id}', '${u.role === 'ADMIN' ? 'USER' : 'ADMIN'}')" class="px-2 py-1 rounded text-[9px] font-bold bg-sky-500/20 text-sky-400 border border-sky-500/30 hover:bg-sky-500/30 transition-colors">
+                                        ${u.role === 'ADMIN' ? 'Demote to User' : 'Promote to Admin'}
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+            } catch (err) {
+                showToast(err.message, 'error');
+                if (err.message.includes('Admin access denied')) {
+                    role = 'USER';
+                    localStorage.setItem('ltrix_role', 'USER');
+                    switchView('USER');
+                } else if (err.message.includes('token') || err.message.includes('authentication')) {
+                    logout();
+                }
+            }
+        }
+
+        function renderAdminBankAccounts(accounts) {
+            const container = document.getElementById('admin-bank-accounts-container');
+            container.innerHTML = '';
+            accounts.forEach(acc => addBankAccountRow(acc));
+            if (accounts.length === 0) addBankAccountRow();
+        }
+
+        function addBankAccountRow(acc = { bankName: '', accountNumber: '', accountName: '', isActive: true }) {
+            const container = document.getElementById('admin-bank-accounts-container');
+            const row = document.createElement('div');
+            row.className = 'bank-account-row bg-slate-950 p-3 rounded border border-slate-700 space-y-2 relative';
+            row.innerHTML = `
+                <button type="button" onclick="this.parentElement.remove()" class="absolute top-2 right-2 text-rose-400 hover:text-rose-300">✕</button>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">Bank Name</label>
+                        <input type="text" class="bank-name w-full p-2 rounded bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none" value="${acc.bankName}" required />
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">Account Number</label>
+                        <input type="text" class="bank-acc w-full p-2 rounded bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none" value="${acc.accountNumber}" required />
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2 items-center">
+                    <div>
+                        <label class="block text-[10px] text-slate-400 mb-1">Account Name</label>
+                        <input type="text" class="bank-name-acc w-full p-2 rounded bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none" value="${acc.accountName}" required />
+                    </div>
+                    <div class="flex items-center gap-2 mt-4">
+                        <input type="checkbox" class="bank-active w-4 h-4 rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-emerald-500" ${acc.isActive ? 'checked' : ''} />
+                        <label class="text-[10px] sm:text-xs text-slate-300">Active (in rotation)</label>
+                    </div>
+                </div>
+            `;
+            container.appendChild(row);
+        }
+
+        async function savePaymentSettings(e) {
+            e.preventDefault();
+
+            const bankRows = document.querySelectorAll('.bank-account-row');
+            const nairaBankAccounts = Array.from(bankRows).map(row => ({
+                bankName: row.querySelector('.bank-name').value.trim(),
+                accountNumber: row.querySelector('.bank-acc').value.trim(),
+                accountName: row.querySelector('.bank-name-acc').value.trim(),
+                isActive: row.querySelector('.bank-active').checked
+            })).filter(b => b.bankName && b.accountNumber && b.accountName);
+
+            if (nairaBankAccounts.length === 0) {
+                return showToast('Please add at least one valid bank account.', 'warning');
+            }
+
+            const payload = {
+                usdtEnabled: document.getElementById('set-usdt-enabled').value === 'true',
+                usdtBep20Address: document.getElementById('set-usdt-address').value.trim(),
+                usdtConfirmations: parseInt(document.getElementById('set-usdt-conf').value),
+                nairaDepositEnabled: document.getElementById('set-ngn-enabled').value === 'true',
+                nairaExchangeRate: parseFloat(document.getElementById('set-ngn-rate').value),
+                nairaBankInstructions: document.getElementById('set-ngn-instructions').value.trim(),
+                nairaBankAccounts
+            };
+
+            try {
+                const data = await apiCall('/api/admin/payment-settings', 'PUT', payload);
+                showToast(data.message, 'success');
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function toggleHotWindow(isChecked) {
+            try {
+                await apiCall('/api/admin/hot-window', 'POST', { forceHotWindowOpen: isChecked });
+                showToast(`Hot Window ${isChecked ? 'OPENED' : 'CLOSED'}.`, 'info');
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function resetHotSlots() {
+            const proceed = await customConfirm('Reset ALL Slots', 'Are you sure you want to reset ALL Hot Plan slots to 0?');
+            if (!proceed) return;
+
+            try {
+                await apiCall('/api/admin/hot-window', 'POST', { resetSlots: true });
+                showToast('All Hot Plan slots reset.', 'success');
+                loadAdminData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function editPromoBudget() {
+            const currentText = document.getElementById('admin-promo-budget').innerText.replace(/[^0-9.]/g, '');
+            const newBudget = await customPrompt('Update Promotional Budget', `Current Weekly Rewards Promo Budget: $${currentText}. Enter new budget amount (USD):`);
+            if (newBudget === null || isNaN(newBudget) || Number(newBudget) < 0) return;
+
+            try {
+                await apiCall('/api/admin/hot-window', 'POST', { verifiedPromotionalBudget: parseFloat(newBudget) });
+                showToast(`Promotional budget updated to $${parseFloat(newBudget).toFixed(2)}.`, 'success');
+                loadAdminData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function togglePackageLock(planId, currentLocked) {
+            try {
+                const data = await apiCall(`/api/admin/packages/${planId}`, 'PATCH', { isLocked: !currentLocked });
+                showToast(data.message, 'success');
+                loadAdminData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function editPackageLimit(planId, currentLimit) {
+            const limit = await customPrompt('Edit Purchase Limit', `Current limit: ${currentLimit}. Enter new limit (number):`);
+            if (limit === null || isNaN(limit) || limit < 1) return;
+
+            try {
+                const data = await apiCall(`/api/admin/packages/${planId}`, 'PATCH', { purchaseLimit: parseInt(limit) });
+                showToast('Purchase limit updated.', 'success');
+                loadAdminData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function editHotPackage(planId, currentLimit, currentSlots) {
+            const slots = await customPrompt('Edit Total Slots', `Current total slots: ${currentSlots}. Enter new total slots:`);
+            if (slots === null || isNaN(slots)) return;
+
+            const limit = await customPrompt('Edit Purchase Limit', `Current limit: ${currentLimit}. Enter new limit:`);
+            if (limit === null || isNaN(limit) || limit < 1) return;
+
+            try {
+                const data = await apiCall(`/api/admin/packages/${planId}`, 'PATCH', { totalSlots: parseInt(slots), purchaseLimit: parseInt(limit) });
+                showToast('Hot package settings updated.', 'success');
+                loadAdminData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function resetPackageSlots(planId) {
+            const proceed = await customConfirm('Reset Specific Slots', 'Are you sure you want to reset the claimed slots to 0 for this specific package?');
+            if (!proceed) return;
+            try {
+                const data = await apiCall(`/api/admin/packages/${planId}`, 'PATCH', { resetClaimed: true });
+                showToast('Slots reset to 0.', 'success');
+                loadAdminData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        // --- User Management JS ---
+        async function rewardUser(userId, username) {
+            const amountStr = await customPrompt('Credit Promotional Reward', `Enter USD reward amount for ${username}:`);
+            if (amountStr === null || isNaN(amountStr) || Number(amountStr) <= 0) return;
+
+            const note = await customPrompt('Reward Note', 'Enter reward description (or leave blank for default):');
+            if (note === null) return;
+
+            try {
+                const data = await apiCall(`/api/admin/users/${userId}/reward`, 'POST', {
+                    amount: parseFloat(amountStr),
+                    note: note.trim() || undefined
+                });
+                showToast(data.message, 'success');
+                loadAdminData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function updateUserStatus(userId, newStatus) {
+            const action = newStatus === 'SUSPENDED' ? 'suspend' : (newStatus === 'LOCKED' ? 'lock withdrawals for' : 'activate');
+            const proceed = await customConfirm('Change Status', `Are you sure you want to ${action} this user?`);
+            if (!proceed) return;
+            try {
+                const data = await apiCall(`/api/admin/users/${userId}/status`, 'PATCH', { status: newStatus });
+                showToast(data.message, 'success');
+                loadAdminData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function deleteUser(userId, username) {
+            const proceed = await customConfirm('Delete User', `<span class="text-rose-400 font-bold">WARNING:</span> Are you sure you want to permanently delete <strong>${username}</strong> and all associated data? This cannot be undone.`);
+            if (!proceed) return;
+            try {
+                const data = await apiCall(`/api/admin/users/${userId}`, 'DELETE');
+                showToast(data.message, 'success');
+                loadAdminData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function updateUserRole(userId, newRole) {
+            const proceed = await customConfirm('Change Role', `Change this user's role to <strong>${newRole}</strong>?`);
+            if (!proceed) return;
+            try {
+                const data = await apiCall(`/api/admin/users/${userId}/role`, 'PATCH', { role: newRole });
+                showToast(data.message, 'success');
+                loadAdminData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function searchUser() {
+            const q = document.getElementById('search-user-input').value.trim();
+            if (!q) return showToast('Enter name, email, or ID.', 'warning');
+
+            try {
+                const data = await apiCall(`/api/admin/users/search?q=${encodeURIComponent(q)}`);
+                const resDiv = document.getElementById('user-search-results');
+
+                if (data.users.length === 0) {
+                    resDiv.innerHTML = '<p class="text-[10px] text-rose-400">No users found.</p>';
+                    return;
+                }
+
+                resDiv.innerHTML = data.users.map(u => `
+                    <button onclick="selectUser('${u._id}', '${u.username}', '${u.email}', ${u.availableBalance})" class="w-full text-left p-2 bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 transition-colors">
+                        <p class="text-[10px] font-bold text-white">${u.username}</p>
+                        <p class="text-[9px] text-slate-400">${u.email} • Bal: $${u.availableBalance.toFixed(2)}</p>
+                    </button>
+                `).join('');
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        function selectUser(id, username, email, balance) {
+            adminActiveUserId = id;
+            document.getElementById('credit-user-id').value = id;
+            document.getElementById('selected-user-display').innerText = `${username} (${email})`;
+            document.getElementById('selected-user-balance').innerText = `$${balance.toFixed(2)}`;
+            document.getElementById('user-search-results').innerHTML = '';
+        }
+
+        async function submitManualCredit(e) {
+            e.preventDefault();
+            if (!adminActiveUserId) return showToast('Select a user first.', 'error');
+
+            const amount = document.getElementById('credit-amount').value;
+            const currency = document.getElementById('credit-currency').value;
+            const txid = document.getElementById('credit-txid').value.trim();
+            const note = document.getElementById('credit-note').value.trim();
+
+            const currentBal = document.getElementById('selected-user-balance').innerText;
+            const username = document.getElementById('selected-user-display').innerText;
+
+            const confirmMsg = `
+                <div class="space-y-2 text-[11px] sm:text-xs">
+                    <p class="text-amber-400 font-bold">CONFIRM MANUAL DEPOSIT:</p>
+                    <ul class="list-disc pl-5">
+                        <li><strong>Member:</strong> ${username}</li>
+                        <li><strong>Current Bal:</strong> ${currentBal}</li>
+                        <li><strong>Amt:</strong> ${amount} ${currency}</li>
+                        <li><strong>Ref:</strong> ${txid || 'Auto'}</li>
+                        <li><strong>Note:</strong> ${note}</li>
+                    </ul>
+                    <p class="mt-3 font-bold text-white">Proceed with credit?</p>
+                </div>
+            `;
+
+            const proceed = await customConfirm('Manual Credit Confirmation', confirmMsg);
+            if (!proceed) return;
+
+            try {
+                const payload = {
+                    userId: adminActiveUserId,
+                    amountReceived: parseFloat(amount),
+                    paymentCurrency: currency,
+                    paymentMethod: currency === 'NGN' ? 'NGN_BANK' : 'USDT_BEP20',
+                    txidOrReference: txid,
+                    adminNote: note
+                };
+
+                const data = await apiCall('/api/admin/deposits/manual-credit', 'POST', payload);
+                showToast(data.message, 'success');
+
+                document.getElementById('credit-amount').value = '';
+                document.getElementById('credit-txid').value = '';
+                document.getElementById('credit-note').value = '';
+                document.getElementById('selected-user-display').innerText = 'None';
+                document.getElementById('selected-user-balance').innerText = '$0.00';
+                adminActiveUserId = null;
+
+                loadAdminData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function processDeposit(id, decision) {
+            let note = '';
+            if (decision === 'APPROVE') {
+                note = await customPrompt('Approve Deposit', 'Optional Admin Note:');
+                if (note === null) return;
+            } else {
+                const proceed = await customConfirm('Reject Deposit', 'Reject this deposit request?');
+                if (!proceed) return;
+            }
+
+            try {
+                const data = await apiCall(`/api/admin/deposits/${id}/decision`, 'POST', { decision, adminNote: note });
+                showToast(data.message, decision === 'APPROVE' ? 'success' : 'warning');
+                loadAdminData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function processWithdrawal(id, decision) {
+            let payoutTxid = '';
+            if (decision === 'APPROVE') {
+                payoutTxid = await customPrompt('Approve Withdrawal', 'Enter payout TXID (Hash):');
+                if (payoutTxid === null) return;
+            } else {
+                const proceed = await customConfirm('Reject Withdrawal', 'Reject this withdrawal? Funds will be refunded.');
+                if (!proceed) return;
+            }
+
+            try {
+                const data = await apiCall(`/api/admin/withdrawals/${id}/decision`, 'POST', { decision, payoutTxid });
+                showToast(data.message, decision === 'APPROVE' ? 'success' : 'warning');
+                loadAdminData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function replyTicket(id, ticketRef) {
+            const reply = await customPrompt('Reply to Ticket', `Response for ${ticketRef}:`);
+            if (reply === null || !reply.trim()) return;
+
+            try {
+                const data = await apiCall(`/api/admin/tickets/${id}/reply`, 'POST', { adminReply: reply });
+                showToast(data.message, 'success');
+                loadAdminData();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+    </script>
+</body>
+
+</html>
