@@ -174,6 +174,50 @@
         </div>
     </div>
 
+    <!-- Hamburger Sidebar Overlay -->
+    <div id="mobile-menu-overlay" class="fixed inset-0 bg-black/60 z-[10000] hidden backdrop-blur-sm transition-opacity"
+        onclick="toggleMobileMenu()"></div>
+
+    <!-- Hamburger Sidebar -->
+    <div id="mobile-menu-drawer"
+        class="fixed top-0 left-0 h-full w-64 bg-slate-950 border-r border-slate-800 z-[10001] transform -translate-x-full transition-transform duration-300 flex flex-col shadow-2xl">
+        <div class="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-900">
+            <h2 class="text-emerald-400 font-extrabold text-lg tracking-wider flex items-center gap-2"><span
+                    class="text-xl">💎</span> Menu</h2>
+            <button onclick="toggleMobileMenu()" class="text-slate-400 hover:text-white text-xl">✕</button>
+        </div>
+        <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+            <button onclick="showMenuSection(null)"
+                class="w-full text-left px-4 py-3 rounded-lg text-sm font-bold text-slate-400 hover:bg-slate-800 hover:text-white transition-colors flex items-center gap-3">🏠
+                Dashboard Home</button>
+            <hr class="border-slate-800 my-2">
+            <button onclick="showMenuSection('section-hot-plans')"
+                class="w-full text-left px-4 py-3 rounded-lg text-sm font-bold text-slate-300 hover:bg-slate-800 hover:text-orange-400 transition-colors flex items-center gap-3">🔥
+                Hot Plans</button>
+            <button onclick="showMenuSection('section-standard-packages')"
+                class="w-full text-left px-4 py-3 rounded-lg text-sm font-bold text-slate-300 hover:bg-slate-800 hover:text-emerald-400 transition-colors flex items-center gap-3">📦
+                LTRIX Packages</button>
+            <button onclick="showMenuSection('section-deposit')"
+                class="w-full text-left px-4 py-3 rounded-lg text-sm font-bold text-slate-300 hover:bg-slate-800 hover:text-emerald-400 transition-colors flex items-center gap-3">💳
+                Deposit Funds</button>
+            <button onclick="showMenuSection('section-withdraw')"
+                class="w-full text-left px-4 py-3 rounded-lg text-sm font-bold text-slate-300 hover:bg-slate-800 hover:text-amber-400 transition-colors flex items-center gap-3">🏦
+                Withdraw (USDT)</button>
+            <button onclick="showMenuSection('section-active-packages')"
+                class="w-full text-left px-4 py-3 rounded-lg text-sm font-bold text-slate-300 hover:bg-slate-800 hover:text-white transition-colors flex items-center gap-3">⏱️
+                Active Packages</button>
+            <button onclick="showMenuSection('section-weekly-rewards')"
+                class="w-full text-left px-4 py-3 rounded-lg text-sm font-bold text-slate-300 hover:bg-slate-800 hover:text-yellow-400 transition-colors flex items-center gap-3">🏆
+                Weekly Rewards</button>
+            <button onclick="showMenuSection('section-transactions')"
+                class="w-full text-left px-4 py-3 rounded-lg text-sm font-bold text-slate-300 hover:bg-slate-800 hover:text-slate-100 transition-colors flex items-center gap-3">📜
+                Transactions</button>
+            <button onclick="showMenuSection('section-transparency')"
+                class="w-full text-left px-4 py-3 rounded-lg text-sm font-bold text-slate-300 hover:bg-slate-800 hover:text-sky-400 transition-colors flex items-center gap-3">🛡️
+                Transparency</button>
+        </nav>
+    </div>
+
     <!-- ========================================== -->
     <!-- 1. UNIFIED AUTHENTICATION & LANDING SCREEN -->
     <!-- ========================================== -->
@@ -302,16 +346,26 @@
     <div id="app-screen" class="hidden w-full max-w-6xl mx-auto p-3 sm:p-4 md:p-8 space-y-6 sm:space-y-8">
         <header
             class="flex flex-col sm:flex-row sm:flex-wrap justify-between sm:items-center gap-4 bg-slate-900 p-4 rounded-xl border border-slate-800 shadow-sm">
-            <div>
-                <div class="flex items-center gap-2">
-                    <span class="text-xl">💎</span>
-                    <h1 class="text-xl font-extrabold tracking-wider text-emerald-400">LTRIX</h1>
-                    <span
-                        class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded">Smart
-                        Wallet</span>
+            <div class="flex items-center gap-3">
+                <!-- Hamburger Button -->
+                <button onclick="toggleMobileMenu()"
+                    class="text-slate-300 hover:text-white p-2 bg-slate-800 rounded border border-slate-700 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl">💎</span>
+                        <h1 class="text-xl font-extrabold tracking-wider text-emerald-400">LTRIX</h1>
+                        <span
+                            class="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded">Smart
+                            Wallet</span>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-1">Member: <span id="user-display"
+                            class="text-white font-medium"></span></p>
                 </div>
-                <p class="text-xs text-slate-400 mt-1">Member: <span id="user-display"
-                        class="text-white font-medium"></span></p>
             </div>
             <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                 <span
@@ -357,11 +411,76 @@
         </section>
 
         <!-- ========================================================== -->
-        <!-- DEPOSIT (USDT BEP20 & NGN) + USDT-ONLY WITHDRAWAL SECTION  -->
+        <!-- DYNAMIC MENU SECTIONS (Hidden by default)                  -->
         <!-- ========================================================== -->
-        <section class="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
-            <!-- Deposit Column (7 cols) -->
-            <div class="lg:col-span-7 bg-slate-900 p-4 sm:p-6 rounded-xl border border-slate-800 space-y-4">
+        <div id="dynamic-menu-sections" class="space-y-6">
+
+            <!-- 🔥 HOT PLANS — LIMITED SUNDAY DEALS! -->
+            <div id="section-hot-plans"
+                class="menu-section hidden bg-gradient-to-br from-orange-950/60 via-slate-900 to-rose-950/50 p-4 sm:p-6 rounded-xl border-2 border-orange-500/50 shadow-xl space-y-5">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl sm:text-2xl">🔥</span>
+                            <h2 class="text-lg sm:text-xl font-extrabold tracking-wide text-orange-400">HOT PLANS</h2>
+                        </div>
+                        <p class="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-amber-300 mt-1">
+                            BIGGER PACKAGES. LIMITED SLOTS. FASTEST FINGER!
+                        </p>
+                    </div>
+                    <div
+                        class="bg-slate-950/80 border border-orange-500/40 px-3 py-2 rounded-lg text-left md:text-right w-full md:w-auto">
+                        <p id="hot-window-badge" class="text-[10px] font-bold uppercase text-amber-400">Checking
+                            Window...
+                        </p>
+                        <p id="hot-window-countdown" class="text-sm font-mono font-bold text-white mt-0.5">--:--:--</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px] sm:text-xs">
+                    <div class="bg-slate-900/90 p-2 sm:p-3 rounded-lg border border-slate-800">
+                        <p class="text-slate-400">📅 OPENING</p>
+                        <p class="font-bold text-white mt-0.5">Sunday</p>
+                    </div>
+                    <div class="bg-slate-900/90 p-2 sm:p-3 rounded-lg border border-slate-800">
+                        <p class="text-slate-400">⏰ TIME</p>
+                        <p class="font-bold text-amber-400 mt-0.5">9AM-12PM</p>
+                    </div>
+                    <div class="bg-slate-900/90 p-2 sm:p-3 rounded-lg border border-slate-800">
+                        <p class="text-slate-400">⚡ ACCESS</p>
+                        <p class="font-bold text-orange-400 mt-0.5">FASTEST FINGER</p>
+                    </div>
+                    <div class="bg-slate-900/90 p-2 sm:p-3 rounded-lg border border-slate-800">
+                        <p class="text-slate-400">🔒 SLOTS</p>
+                        <p class="font-bold text-rose-400 mt-0.5">Limited</p>
+                    </div>
+                </div>
+
+                <div id="hot-packages-grid" class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"></div>
+
+                <div
+                    class="bg-slate-950/70 p-4 rounded-lg border border-orange-500/20 text-[10px] sm:text-xs text-slate-300 space-y-1">
+                    <p class="font-bold text-orange-400 mb-1">📌 IMPORTANT</p>
+                    <ul class="list-disc pl-4 space-y-1 text-slate-400">
+                        <li>Opens Sunday 9AM, closes strictly 12PM.</li>
+                        <li>Fastest finger — limited slots only.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Standard Available Packages -->
+            <div id="section-standard-packages"
+                class="menu-section hidden bg-slate-900 p-4 sm:p-6 rounded-xl border border-slate-800">
+                <h2 class="text-lg font-bold mb-1 text-white">📦 LTRIX Packages</h2>
+                <p class="text-[10px] sm:text-xs text-slate-400 mb-4">First income is credited immediately upon
+                    activation.
+                </p>
+                <div id="packages-grid" class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"></div>
+            </div>
+
+            <!-- 💳 Deposit Funds -->
+            <div id="section-deposit"
+                class="menu-section hidden bg-slate-900 p-4 sm:p-6 rounded-xl border border-slate-800 space-y-4">
                 <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
                     <div>
                         <h2 class="text-lg font-bold text-emerald-400">💳 Deposit Funds</h2>
@@ -578,11 +697,9 @@
                 </div>
             </div>
 
-            <!-- ================================================== -->
-            <!-- WITHDRAW COLUMN (STRICTLY USDT BEP20 ONLY)         -->
-            <!-- ================================================== -->
-            <div
-                class="lg:col-span-5 bg-slate-900 p-4 sm:p-6 rounded-xl border border-slate-800 flex flex-col justify-between space-y-4">
+            <!-- 🏦 Withdraw (USDT Only) -->
+            <div id="section-withdraw"
+                class="menu-section hidden bg-slate-900 p-4 sm:p-6 rounded-xl border border-slate-800 flex flex-col justify-between space-y-4">
                 <div class="space-y-4">
                     <div class="flex flex-col sm:flex-row justify-between sm:items-start gap-2">
                         <div>
@@ -646,116 +763,17 @@
                         Limited to 1 withdrawal per UTC day.</p>
                 </div>
             </div>
-        </section>
 
-        <!-- 🔥 HOT PLANS — LIMITED SUNDAY DEALS! -->
-        <section
-            class="bg-gradient-to-br from-orange-950/60 via-slate-900 to-rose-950/50 p-4 sm:p-6 rounded-xl border-2 border-orange-500/50 shadow-xl space-y-5">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-xl sm:text-2xl">🔥</span>
-                        <h2 class="text-lg sm:text-xl font-extrabold tracking-wide text-orange-400">HOT PLANS</h2>
-                    </div>
-                    <p class="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-amber-300 mt-1">
-                        BIGGER PACKAGES. LIMITED SLOTS. FASTEST FINGER!
-                    </p>
-                </div>
-                <div
-                    class="bg-slate-950/80 border border-orange-500/40 px-3 py-2 rounded-lg text-left md:text-right w-full md:w-auto">
-                    <p id="hot-window-badge" class="text-[10px] font-bold uppercase text-amber-400">Checking Window...
-                    </p>
-                    <p id="hot-window-countdown" class="text-sm font-mono font-bold text-white mt-0.5">--:--:--</p>
-                </div>
+            <!-- ⏱️ Active Packages -->
+            <div id="section-active-packages"
+                class="menu-section hidden bg-slate-900 p-4 sm:p-6 rounded-xl border border-slate-800">
+                <h2 class="text-lg font-bold mb-4 text-white">⏱️ Active Packages</h2>
+                <div id="active-packages-list" class="space-y-3 text-sm"></div>
             </div>
 
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px] sm:text-xs">
-                <div class="bg-slate-900/90 p-2 sm:p-3 rounded-lg border border-slate-800">
-                    <p class="text-slate-400">📅 OPENING</p>
-                    <p class="font-bold text-white mt-0.5">Sunday</p>
-                </div>
-                <div class="bg-slate-900/90 p-2 sm:p-3 rounded-lg border border-slate-800">
-                    <p class="text-slate-400">⏰ TIME</p>
-                    <p class="font-bold text-amber-400 mt-0.5">9AM-12PM</p>
-                </div>
-                <div class="bg-slate-900/90 p-2 sm:p-3 rounded-lg border border-slate-800">
-                    <p class="text-slate-400">⚡ ACCESS</p>
-                    <p class="font-bold text-orange-400 mt-0.5">FASTEST FINGER</p>
-                </div>
-                <div class="bg-slate-900/90 p-2 sm:p-3 rounded-lg border border-slate-800">
-                    <p class="text-slate-400">🔒 SLOTS</p>
-                    <p class="font-bold text-rose-400 mt-0.5">Limited</p>
-                </div>
-            </div>
-
-            <div id="hot-packages-grid" class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"></div>
-
-            <div
-                class="bg-slate-950/70 p-4 rounded-lg border border-orange-500/20 text-[10px] sm:text-xs text-slate-300 space-y-1">
-                <p class="font-bold text-orange-400 mb-1">📌 IMPORTANT</p>
-                <ul class="list-disc pl-4 space-y-1 text-slate-400">
-                    <li>Opens Sunday 9AM, closes strictly 12PM.</li>
-                    <li>Fastest finger — limited slots only.</li>
-                </ul>
-            </div>
-        </section>
-
-        <!-- Standard Available Packages -->
-        <section class="bg-slate-900 p-4 sm:p-6 rounded-xl border border-slate-800">
-            <h2 class="text-lg font-bold mb-1 text-white">📦 LTRIX Packages</h2>
-            <p class="text-[10px] sm:text-xs text-slate-400 mb-4">First income is credited immediately upon activation.
-            </p>
-            <div id="packages-grid" class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4"></div>
-        </section>
-
-        <!-- 24-Hour Income Countdown & Active Cycles -->
-        <section class="bg-slate-900 p-4 sm:p-6 rounded-xl border border-slate-800">
-            <h2 class="text-lg font-bold mb-4 text-white">⏱️ Active Packages</h2>
-            <div id="active-packages-list" class="space-y-3 text-sm"></div>
-        </section>
-
-        <!-- Referral Dashboard & Weekly Rewards -->
-        <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-            <div
-                class="bg-slate-900 p-4 sm:p-6 rounded-xl border border-slate-800 flex flex-col justify-between space-y-4">
-                <div>
-                    <h2 class="text-lg font-bold mb-1 text-white">🎁 Referrals (6%)</h2>
-                    <p class="text-[10px] sm:text-xs text-slate-400 mb-3">Earn 6% immediately when a referral activates
-                        a package.</p>
-
-                    <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 mb-4">
-                        <p class="text-[10px] text-slate-400 mb-1">Your Link:</p>
-                        <div class="flex flex-col sm:flex-row gap-2">
-                            <input type="text" id="ref-link-input" readonly
-                                class="flex-1 text-[10px] sm:text-xs p-2.5 rounded bg-slate-900 border border-slate-700 text-emerald-400 font-mono focus:outline-none" />
-                            <button onclick="copyReferralLink()"
-                                class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold px-3 py-2.5 rounded text-xs transition-colors shrink-0">
-                                Copy Link
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-3 gap-2 mb-4 text-center">
-                        <div class="bg-slate-800/80 p-2 rounded border border-slate-700">
-                            <p class="text-[10px] text-slate-400">Invited</p>
-                            <p id="ref-count-total" class="text-sm font-bold text-white">0</p>
-                        </div>
-                        <div class="bg-slate-800/80 p-2 rounded border border-slate-700">
-                            <p class="text-[10px] text-slate-400">Active</p>
-                            <p id="ref-count-eligible" class="text-sm font-bold text-emerald-400">0</p>
-                        </div>
-                        <div class="bg-slate-800/80 p-2 rounded border border-slate-700">
-                            <p class="text-[10px] text-slate-400">Earned</p>
-                            <p id="ref-total-commission" class="text-sm font-bold text-sky-400">$0.00</p>
-                        </div>
-                    </div>
-
-                    <div id="referrals-list" class="space-y-2 max-h-48 overflow-y-auto text-[10px] sm:text-xs"></div>
-                </div>
-            </div>
-
-            <div
-                class="bg-slate-900 p-4 sm:p-6 rounded-xl border border-slate-800 flex flex-col justify-between space-y-4">
+            <!-- 🏆 Weekly Rewards -->
+            <div id="section-weekly-rewards"
+                class="menu-section hidden bg-slate-900 p-4 sm:p-6 rounded-xl border border-slate-800 flex flex-col justify-between space-y-4">
                 <div class="space-y-4">
                     <div class="flex justify-between items-start gap-2 flex-wrap">
                         <div>
@@ -811,27 +829,10 @@
                     </div>
                 </div>
             </div>
-        </section>
 
-        <!-- Notifications & Transaction History -->
-        <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-            <div class="bg-slate-900 p-4 sm:p-6 rounded-xl border border-slate-800 space-y-4">
-                <div class="flex justify-between items-center flex-wrap gap-2">
-                    <div class="flex items-center gap-2">
-                        <h2 class="text-lg font-bold text-white">🔔 Notifications</h2>
-                        <span id="unread-badge"
-                            class="text-[10px] bg-emerald-500 text-slate-950 font-bold px-2 py-0.5 rounded-full">0</span>
-                    </div>
-                    <button onclick="markAllNotificationsRead()"
-                        class="text-[10px] sm:text-xs text-emerald-400 hover:underline transition-colors">
-                        Mark read
-                    </button>
-                </div>
-                <div id="notifications-list" class="space-y-2 max-h-64 overflow-y-auto text-[10px] sm:text-xs pr-1">
-                </div>
-            </div>
-
-            <div class="bg-slate-900 p-4 sm:p-6 rounded-xl border border-slate-800 space-y-4">
+            <!-- 📜 Transactions -->
+            <div id="section-transactions"
+                class="menu-section hidden bg-slate-900 p-4 sm:p-6 rounded-xl border border-slate-800 space-y-4">
                 <div class="flex flex-wrap justify-between items-center gap-2">
                     <h2 class="text-lg font-bold text-white">📜 Transactions</h2>
                     <button onclick="exportTransactionsCSV()"
@@ -858,11 +859,91 @@
                 <div id="transactions-list" class="space-y-2 max-h-64 overflow-y-auto text-[10px] sm:text-xs pr-1">
                 </div>
             </div>
-        </section>
 
-        <!-- Customer Support & Security & Transparency Centre -->
+            <!-- 🛡️ Transparency -->
+            <div id="section-transparency"
+                class="menu-section hidden bg-slate-900 p-4 sm:p-6 rounded-xl border border-slate-800 space-y-4">
+                <h2 class="text-lg font-bold text-white">🛡️ Transparency</h2>
+                <div class="text-[10px] sm:text-xs space-y-2 bg-slate-950 p-3 rounded-lg border border-slate-800">
+                    <p class="flex justify-between"><span class="text-slate-400">Business Reg:</span> <strong
+                            id="trans-reg-no" class="text-white"></strong></p>
+                    <p class="flex justify-between"><span class="text-slate-400">Promo Budget:</span> <strong
+                            id="trans-budget" class="text-emerald-400"></strong></p>
+                    <p class="flex justify-between"><span class="text-slate-400">Total Members:</span> <strong
+                            id="trans-members" class="text-white"></strong></p>
+                    <p class="flex justify-between"><span class="text-slate-400">Active Packages:</span> <strong
+                            id="trans-active-pkgs" class="text-white"></strong></p>
+                    <p class="flex justify-between"><span class="text-slate-400">Withdrawals Paid:</span> <strong
+                            id="trans-withdrawals" class="text-amber-400"></strong></p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ========================================================== -->
+        <!-- ALWAYS VISIBLE DASHBOARD HOME MODULES                      -->
+        <!-- ========================================================== -->
+
+        <!-- Remaining Modules: Referrals, Notifications, Support -->
         <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            <!-- 🎁 Referrals -->
+            <div
+                class="bg-slate-900 p-4 sm:p-6 rounded-xl border border-slate-800 flex flex-col justify-between space-y-4">
+                <div>
+                    <h2 class="text-lg font-bold mb-1 text-white">🎁 Referrals (6%)</h2>
+                    <p class="text-[10px] sm:text-xs text-slate-400 mb-3">Earn 6% immediately when a referral activates
+                        a package.</p>
+
+                    <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 mb-4">
+                        <p class="text-[10px] text-slate-400 mb-1">Your Link:</p>
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            <input type="text" id="ref-link-input" readonly
+                                class="flex-1 text-[10px] sm:text-xs p-2.5 rounded bg-slate-900 border border-slate-700 text-emerald-400 font-mono focus:outline-none" />
+                            <button onclick="copyReferralLink()"
+                                class="bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold px-3 py-2.5 rounded text-xs transition-colors shrink-0">
+                                Copy Link
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2 mb-4 text-center">
+                        <div class="bg-slate-800/80 p-2 rounded border border-slate-700">
+                            <p class="text-[10px] text-slate-400">Invited</p>
+                            <p id="ref-count-total" class="text-sm font-bold text-white">0</p>
+                        </div>
+                        <div class="bg-slate-800/80 p-2 rounded border border-slate-700">
+                            <p class="text-[10px] text-slate-400">Active</p>
+                            <p id="ref-count-eligible" class="text-sm font-bold text-emerald-400">0</p>
+                        </div>
+                        <div class="bg-slate-800/80 p-2 rounded border border-slate-700">
+                            <p class="text-[10px] text-slate-400">Earned</p>
+                            <p id="ref-total-commission" class="text-sm font-bold text-sky-400">$0.00</p>
+                        </div>
+                    </div>
+
+                    <div id="referrals-list" class="space-y-2 max-h-48 overflow-y-auto text-[10px] sm:text-xs"></div>
+                </div>
+            </div>
+
+            <!-- 🔔 Notifications -->
             <div class="bg-slate-900 p-4 sm:p-6 rounded-xl border border-slate-800 space-y-4">
+                <div class="flex justify-between items-center flex-wrap gap-2">
+                    <div class="flex items-center gap-2">
+                        <h2 class="text-lg font-bold text-white">🔔 Notifications</h2>
+                        <span id="unread-badge"
+                            class="text-[10px] bg-emerald-500 text-slate-950 font-bold px-2 py-0.5 rounded-full">0</span>
+                    </div>
+                    <button onclick="markAllNotificationsRead()"
+                        class="text-[10px] sm:text-xs text-emerald-400 hover:underline transition-colors">
+                        Mark read
+                    </button>
+                </div>
+                <div id="notifications-list" class="space-y-2 max-h-64 overflow-y-auto text-[10px] sm:text-xs pr-1">
+                </div>
+            </div>
+
+            <!-- 🎧 Customer Support -->
+            <div class="bg-slate-900 p-4 sm:p-6 rounded-xl border border-slate-800 space-y-4 lg:col-span-2">
                 <div class="flex justify-between items-center flex-wrap gap-2">
                     <h2 class="text-lg font-bold text-white">🎧 Support</h2>
                     <div class="flex gap-1 text-[10px] sm:text-xs">
@@ -907,22 +988,6 @@
                         <p class="font-bold text-white">Q: Fees?</p>
                         <p class="text-slate-400 mt-1">A: 5% processing fee. Minimum $5.00 USDT.</p>
                     </div>
-                </div>
-            </div>
-
-            <div class="bg-slate-900 p-4 sm:p-6 rounded-xl border border-slate-800 space-y-4">
-                <h2 class="text-lg font-bold text-white">🛡️ Transparency</h2>
-                <div class="text-[10px] sm:text-xs space-y-2 bg-slate-950 p-3 rounded-lg border border-slate-800">
-                    <p class="flex justify-between"><span class="text-slate-400">Business Reg:</span> <strong
-                            id="trans-reg-no" class="text-white"></strong></p>
-                    <p class="flex justify-between"><span class="text-slate-400">Promo Budget:</span> <strong
-                            id="trans-budget" class="text-emerald-400"></strong></p>
-                    <p class="flex justify-between"><span class="text-slate-400">Total Members:</span> <strong
-                            id="trans-members" class="text-white"></strong></p>
-                    <p class="flex justify-between"><span class="text-slate-400">Active Packages:</span> <strong
-                            id="trans-active-pkgs" class="text-white"></strong></p>
-                    <p class="flex justify-between"><span class="text-slate-400">Withdrawals Paid:</span> <strong
-                            id="trans-withdrawals" class="text-amber-400"></strong></p>
                 </div>
             </div>
         </section>
@@ -1170,6 +1235,43 @@
     </div>
     <!-- JS Logic -->
     <script>
+        // === HAMBURGER MENU LOGIC ===
+
+        function toggleMobileMenu() {
+            const overlay = document.getElementById('mobile-menu-overlay');
+            const drawer = document.getElementById('mobile-menu-drawer');
+
+            if (overlay.classList.contains('hidden')) {
+                overlay.classList.remove('hidden');
+                // Brief timeout to ensure display block renders before sliding in
+                setTimeout(() => drawer.classList.remove('-translate-x-full'), 10);
+            } else {
+                drawer.classList.add('-translate-x-full');
+                setTimeout(() => overlay.classList.add('hidden'), 300); // Wait for transition
+            }
+        }
+
+        function showMenuSection(sectionId) {
+            // Hide all dynamic menu sections first
+            const sections = document.querySelectorAll('.menu-section');
+            sections.forEach(sec => sec.classList.add('hidden'));
+
+            // Show the targeted section (if null, user clicked "Dashboard Home")
+            if (sectionId) {
+                const target = document.getElementById(sectionId);
+                if (target) {
+                    target.classList.remove('hidden');
+                    // Smooth scroll to position the view perfectly
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            } else {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            // Close the menu automatically
+            toggleMobileMenu();
+        }
+
         async function fetchPublicLandingStats() {
             try {
                 const res = await fetch('/api/public/platform-stats');
@@ -1660,7 +1762,7 @@
                 if (data.weeklyRewards.builderClaimed) {
                     btnBuilder.disabled = true; btnBuilder.innerText = 'Claimed'; btnBuilder.className = 'w-full py-2 rounded text-[10px] sm:text-xs font-bold bg-slate-700 text-slate-400 cursor-not-allowed';
                 } else if (builderCount >= 5) {
-                    btnBuilder.disabled = false; btnBuilder.innerText = 'Claim $15 Bonus'; btnBuilder.className = 'w-full py-2 rounded text-[10px] sm:text-xs font-bold bg-emerald-500 text-slate-950 hover:bg-emerald-600 transition-colors';
+                    btnBuilder.disabled = false; btnBuilder.innerText = 'Claim $15 Bonus'; btnBuilder.className = 'w-full py-2 rounded text-[10px] sm:text-xs font-bold bg-emerald-50 text-slate-950 hover:bg-emerald-600 transition-colors';
                 } else {
                     btnBuilder.disabled = true; btnBuilder.innerText = 'Need 5 Referrals'; btnBuilder.className = 'w-full py-2 rounded text-[10px] sm:text-xs font-bold bg-slate-700 text-slate-400 cursor-not-allowed';
                 }
