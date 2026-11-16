@@ -1200,6 +1200,15 @@
                     </div>
                 </div>
 
+                <!-- Audit Trail / Logs -->
+                <div class="bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-800 space-y-4">
+                    <h2 class="text-base sm:text-lg font-bold text-indigo-400 border-b border-slate-800 pb-2">📋 Admin
+                        Audit Trail</h2>
+                    <div id="admin-audit-logs" class="space-y-3 max-h-72 overflow-y-auto pr-1 text-[10px] sm:text-xs">
+                        <!-- Logs will be injected here -->
+                    </div>
+                </div>
+
                 <!-- Pending Deposits -->
                 <div class="bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-800 space-y-4">
                     <h2 class="text-base sm:text-lg font-bold text-amber-400 border-b border-slate-800 pb-2">⏳ Pending
@@ -2492,6 +2501,22 @@
                         </div>
                     `;
                 }).join('');
+
+                // Render Audit Logs
+                const auditContainer = document.getElementById('admin-audit-logs');
+                if (auditContainer) {
+                    auditContainer.innerHTML = data.manualAuditLogs.map(log => `
+                        <div class="bg-slate-950 p-3 rounded border border-slate-800 flex flex-col gap-1">
+                            <div class="flex justify-between items-start">
+                                <p class="font-bold text-white text-[11px] sm:text-xs">Admin: <span class="text-emerald-400">${log.adminIdentifier}</span></p>
+                                <span class="text-[9px] text-slate-500">${new Date(log.createdAt).toLocaleString()}</span>
+                            </div>
+                            <p class="text-slate-300">Action: Credited <strong class="text-white">${log.userId?.username || 'User'}</strong> with <strong class="text-sky-400">$${log.usdAmountCredited.toFixed(2)} USD</strong></p>
+                            <p class="text-slate-400 text-[10px]">Method: ${log.paymentMethod} | Ref: ${log.txidOrReference}</p>
+                            <p class="text-amber-400 text-[10px] mt-1 border-t border-slate-800 pt-1">Note: ${log.adminNote}</p>
+                        </div>
+                    `).join('') || '<p class="text-slate-500 text-center py-2">No audit logs found.</p>';
+                }
 
             } catch (err) {
                 // Ignore silent background network drops
