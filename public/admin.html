@@ -254,6 +254,47 @@
                         </button>
                     </div>
                 </div>
+
+                <!-- Community Settings -->
+                <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 space-y-4">
+                    <h2 class="text-lg font-bold text-blue-400 border-b border-slate-800 pb-2">📢 Community Links</h2>
+                    <form id="community-settings-form" onsubmit="saveCommunitySettings(event)"
+                        class="space-y-3 text-xs">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-slate-300 font-bold">Enable Global Popup:</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="set-comm-global" class="sr-only peer">
+                                <div
+                                    class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500">
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="p-3 bg-slate-950 rounded border border-slate-800 space-y-2">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-emerald-400 font-bold">WhatsApp Group</span>
+                                <input type="checkbox" id="set-comm-wa-enabled"
+                                    class="w-3.5 h-3.5 rounded border-slate-700 bg-slate-900 text-emerald-500">
+                            </div>
+                            <input type="text" id="set-comm-wa-link" placeholder="https://chat.whatsapp.com/..."
+                                class="w-full p-2.5 rounded bg-slate-950 border border-slate-700 text-white focus:outline-none focus:border-emerald-500" />
+                        </div>
+
+                        <div class="p-3 bg-slate-950 rounded border border-slate-800 space-y-2">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-sky-400 font-bold">Telegram Group</span>
+                                <input type="checkbox" id="set-comm-tg-enabled"
+                                    class="w-3.5 h-3.5 rounded border-slate-700 bg-slate-900 text-sky-500">
+                            </div>
+                            <input type="text" id="set-comm-tg-link" placeholder="https://t.me/..."
+                                class="w-full p-2.5 rounded bg-slate-950 border border-slate-700 text-white focus:outline-none focus:border-sky-500" />
+                        </div>
+
+                        <button type="submit"
+                            class="w-full py-2.5 bg-blue-500 hover:bg-blue-600 text-slate-950 font-bold rounded transition-colors mt-2">Save
+                            Links</button>
+                    </form>
+                </div>
             </div>
 
             <!-- Right Column: Manual Credit & Management -->
@@ -565,6 +606,13 @@
                 document.getElementById('hot-force-toggle').checked = data.hotWindow.forceHotWindowOpen;
                 document.getElementById('promo-budget-display').innerText = `$${data.transparency?.verifiedPromotionalBudget?.toFixed(2) || data.settings.verifiedPromotionalBudget.toFixed(2)}`;
 
+                // Community Settings
+                document.getElementById('set-comm-global').checked = data.settings.communityPopupEnabled;
+                document.getElementById('set-comm-wa-enabled').checked = data.settings.whatsappEnabled;
+                document.getElementById('set-comm-wa-link').value = data.settings.whatsappLink || '';
+                document.getElementById('set-comm-tg-enabled').checked = data.settings.telegramEnabled;
+                document.getElementById('set-comm-tg-link').value = data.settings.telegramLink || '';
+
                 // Pending Deposits
                 document.getElementById('pending-deposits-list').innerHTML = data.deposits.filter(d => ['PENDING', 'PROCESSING'].includes(d.status)).map(d => `
                     <div class="bg-slate-950 p-3 rounded border border-slate-800 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
@@ -820,6 +868,32 @@
             try {
                 const data = await apiCall('/api/admin/payment-settings', 'PUT', payload);
                 showToast(data.message, 'success');
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function saveCommunitySettings(e) {
+            e.preventDefault();
+            const payload = {
+                communityPopupEnabled: document.getElementById('set-comm-global').checked,
+                whatsappEnabled: document.getElementById('set-comm-wa-enabled').checked,
+                whatsappLink: document.getElementById('set-comm-wa-link').value,
+                telegramEnabled: document.getElementById('set-comm-tg-enabled').checked,
+                telegramLink: document.getElementById('set-comm-tg-link').value
+            };
+
+            try {
+                const btn = e.target.querySelector('button[type="submit"]');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = 'Saving...';
+                btn.disabled = true;
+
+                const data = await apiCall('/api/admin/community-settings', 'PUT', payload);
+                showToast(data.message, 'success');
+
+                btn.innerHTML = originalText;
+                btn.disabled = false;
             } catch (err) {
                 showToast(err.message, 'error');
             }

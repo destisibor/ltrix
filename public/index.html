@@ -119,6 +119,74 @@
         </div>
     </div>
 
+    <!-- Community Invitation Modal -->
+    <div id="community-popup-modal"
+        class="fixed inset-0 z-[10000] hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div
+            class="bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden modal-anim-enter relative p-6 sm:p-8">
+
+            <!-- Ambient Background Glows -->
+            <div
+                class="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none">
+            </div>
+            <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-sky-500/15 rounded-full blur-3xl pointer-events-none">
+            </div>
+
+            <!-- Elegant Close Button -->
+            <button onclick="closeCommunityPopup()"
+                class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800/50 hover:bg-slate-700 p-2 rounded-full transition-all z-10 border border-slate-700/50 hover:border-slate-500">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+            </button>
+
+            <div class="text-center relative z-10">
+                <!-- Fintech Icon Container -->
+                <div
+                    class="w-14 h-14 mx-auto bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-2xl flex items-center justify-center shadow-lg mb-5 transform -rotate-3 transition-transform hover:rotate-0">
+                    <span class="text-2xl transform rotate-3">💎</span>
+                </div>
+
+                <h3 class="text-xl font-extrabold text-white tracking-tight mb-2">Join the Community</h3>
+                <p class="text-xs text-slate-400 mb-7 leading-relaxed px-1">Stay ahead of the curve with real-time news,
+                    verified payment proofs, and elite member insights.</p>
+
+                <div class="space-y-3" id="community-buttons-container">
+                    <!-- WhatsApp Fintech Button -->
+                    <a id="btn-join-whatsapp" href="#" target="_blank"
+                        class="hidden group relative w-full py-3.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-emerald-500/40 text-white font-bold text-sm transition-all overflow-hidden flex items-center justify-center gap-2.5 shadow-sm hover:shadow-emerald-500/10">
+                        <div
+                            class="absolute inset-0 w-full h-full bg-gradient-to-r from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                        </div>
+                        <svg class="w-5 h-5 text-emerald-400" fill="currentColor" viewBox="0 0 24 24">
+                            <path
+                                d="M12.031 0C5.385 0 0 5.385 0 12.031c0 2.651.838 5.12 2.296 7.202L.7 24l4.908-1.587A11.96 11.96 0 0012.03 24c6.646 0 12.03-5.385 12.03-12.03S18.676 0 12.031 0zm6.16 17.26c-.261.737-1.522 1.41-2.128 1.472-.518.053-1.18.174-3.376-.69-2.646-1.042-4.32-3.75-4.453-3.928-.13-.177-1.066-1.423-1.066-2.716 0-1.293.67-1.928.907-2.193.237-.265.517-.332.69-.332.172 0 .344 0 .493.007.158.007.368-.06.577.441.217.516.737 1.8.8 1.933.064.133.106.287.021.464-.085.177-.128.287-.256.442-.128.154-.27.34-.383.453-.128.128-.266.273-.117.528.149.256.66 1.093 1.422 1.772.98.874 1.79 1.144 2.047 1.272.256.128.405.106.554-.064.15-.17 .648-.755.82-1.014.172-.26.345-.218.577-.128.232.09 1.468.694 1.718.818.25.124.417.186.478.29.061.104.061.602-.2 1.34z" />
+                        </svg>
+                        <span class="relative z-10 tracking-wide">Join WhatsApp Group</span>
+                    </a>
+
+                    <!-- Telegram Fintech Button -->
+                    <a id="btn-join-telegram" href="#" target="_blank"
+                        class="hidden group relative w-full py-3.5 rounded-xl bg-slate-950 border border-slate-800 hover:border-sky-500/40 text-white font-bold text-sm transition-all overflow-hidden flex items-center justify-center gap-2.5 shadow-sm hover:shadow-sky-500/10">
+                        <div
+                            class="absolute inset-0 w-full h-full bg-gradient-to-r from-sky-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                        </div>
+                        <svg class="w-5 h-5 text-sky-400" fill="currentColor" viewBox="0 0 24 24">
+                            <path
+                                d="M11.944 0A12 12 0 000 12a12 12 0 0012 12 12 12 0 0012-12A12 12 0 0012 0a12 12 0 00-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 01.171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.892-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" />
+                        </svg>
+                        <span class="relative z-10 tracking-wide">Join Telegram Group</span>
+                    </a>
+                </div>
+
+                <button onclick="closeCommunityPopup()"
+                    class="w-full mt-5 py-2 text-[11px] font-semibold text-slate-500 hover:text-white transition-colors tracking-wide uppercase">I'll
+                    do this later</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Forgot Password Modal -->
     <div id="forgot-password-modal"
         class="fixed inset-0 z-[10000] hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
@@ -1136,6 +1204,48 @@
                         </button>
                     </div>
                 </div>
+
+                <!-- Community Settings -->
+                <div class="bg-slate-900 p-4 sm:p-5 rounded-xl border border-slate-800 space-y-4">
+                    <h2 class="text-base sm:text-lg font-bold text-blue-400 border-b border-slate-800 pb-2">📢 Community
+                        Links</h2>
+                    <form id="community-settings-form" onsubmit="saveCommunitySettings(event)"
+                        class="space-y-3 text-[10px] sm:text-xs">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-slate-300 font-bold">Enable Global Popup:</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="set-comm-global" class="sr-only peer">
+                                <div
+                                    class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500">
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="p-3 bg-slate-950 rounded border border-slate-800 space-y-2">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-emerald-400 font-bold">WhatsApp Group</span>
+                                <input type="checkbox" id="set-comm-wa-enabled"
+                                    class="w-3.5 h-3.5 rounded border-slate-700 bg-slate-900 text-emerald-500">
+                            </div>
+                            <input type="text" id="set-comm-wa-link" placeholder="https://chat.whatsapp.com/..."
+                                class="w-full p-2.5 rounded bg-slate-950 border border-slate-700 text-white focus:outline-none focus:border-emerald-500" />
+                        </div>
+
+                        <div class="p-3 bg-slate-950 rounded border border-slate-800 space-y-2">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-sky-400 font-bold">Telegram Group</span>
+                                <input type="checkbox" id="set-comm-tg-enabled"
+                                    class="w-3.5 h-3.5 rounded border-slate-700 bg-slate-900 text-sky-500">
+                            </div>
+                            <input type="text" id="set-comm-tg-link" placeholder="https://t.me/..."
+                                class="w-full p-2.5 rounded bg-slate-950 border border-slate-700 text-white focus:outline-none focus:border-sky-500" />
+                        </div>
+
+                        <button type="submit"
+                            class="w-full py-2.5 bg-blue-500 hover:bg-blue-600 text-slate-950 font-bold rounded text-xs transition-colors mt-2">Save
+                            Links</button>
+                    </form>
+                </div>
             </div>
 
             <!-- Right Column: Manual Credit & Management -->
@@ -1706,6 +1816,12 @@
             return data;
         }
 
+        function closeCommunityPopup() {
+            const modal = document.getElementById('community-popup-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
         // ==========================================
         // MEMBER DASHBOARD LOGIC
         // ==========================================
@@ -1829,6 +1945,45 @@
                         <p class="text-[9px] text-slate-500 mt-1">${new Date(n.createdAt).toLocaleString()}</p>
                     </div>
                 `).join('') || '<p class="text-slate-500 text-center">No notifications.</p>';
+
+                // --- Community Popup Logic ---
+                if (data.communitySettings && data.communitySettings.enabled) {
+                    const hasSeenPopup = sessionStorage.getItem('ltrix_community_shown');
+
+                    if (!hasSeenPopup) {
+                        const btnWa = document.getElementById('btn-join-whatsapp');
+                        const btnTg = document.getElementById('btn-join-telegram');
+
+                        let shouldShow = false;
+
+                        if (data.communitySettings.whatsappEnabled && data.communitySettings.whatsappLink) {
+                            btnWa.href = data.communitySettings.whatsappLink;
+                            btnWa.classList.remove('hidden');
+                            shouldShow = true;
+                        } else {
+                            btnWa.classList.add('hidden');
+                        }
+
+                        if (data.communitySettings.telegramEnabled && data.communitySettings.telegramLink) {
+                            btnTg.href = data.communitySettings.telegramLink;
+                            btnTg.classList.remove('hidden');
+                            shouldShow = true;
+                        } else {
+                            btnTg.classList.add('hidden');
+                        }
+
+                        if (shouldShow) {
+                            // Delay slightly for smooth entrance after dashboard load
+                            setTimeout(() => {
+                                const modal = document.getElementById('community-popup-modal');
+                                modal.classList.remove('hidden');
+                                modal.classList.add('flex');
+                                sessionStorage.setItem('ltrix_community_shown', 'true');
+                            }, 800);
+                        }
+                    }
+                }
+                // ------------------------------
 
                 // === DEBIT CARD STYLED PACKAGE GENERATOR ===
                 const buildPkgCard = (p, isHot) => {
@@ -2382,6 +2537,16 @@
 
                 renderAdminBankAccounts(data.settings.nairaBankAccounts || []);
 
+                // Safely update Community Settings (prevents dashboard crash if UI is missing)
+                const commGlobal = document.getElementById('set-comm-global');
+                if (commGlobal) {
+                    commGlobal.checked = data.settings.communityPopupEnabled;
+                    document.getElementById('set-comm-wa-enabled').checked = data.settings.whatsappEnabled;
+                    document.getElementById('set-comm-wa-link').value = data.settings.whatsappLink || '';
+                    document.getElementById('set-comm-tg-enabled').checked = data.settings.telegramEnabled;
+                    document.getElementById('set-comm-tg-link').value = data.settings.telegramLink || '';
+                }
+
                 document.getElementById('pending-deposits-list').innerHTML = data.deposits.filter(d => ['PENDING', 'PROCESSING'].includes(d.status)).map(d => `
                     <div class="bg-slate-950 p-3 rounded border border-slate-800 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
                         <div>
@@ -2604,10 +2769,36 @@
             }
         }
 
+        async function saveCommunitySettings(e) {
+            e.preventDefault();
+            const payload = {
+                communityPopupEnabled: document.getElementById('set-comm-global').checked,
+                whatsappEnabled: document.getElementById('set-comm-wa-enabled').checked,
+                whatsappLink: document.getElementById('set-comm-wa-link').value,
+                telegramEnabled: document.getElementById('set-comm-tg-enabled').checked,
+                telegramLink: document.getElementById('set-comm-tg-link').value
+            };
+
+            try {
+                const btn = e.target.querySelector('button[type="submit"]');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = 'Saving...';
+                btn.disabled = true;
+
+                const data = await apiCall('/api/admin/community-settings', 'PUT', payload);
+                showToast(data.message, 'success');
+
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
         async function toggleHotWindow(isChecked) {
             try {
                 await apiCall('/api/admin/hot-window', 'POST', { forceHotWindowOpen: isChecked });
-                showToast(`Hot Window ${isChecked ? 'OPENED' : 'CLOSED'}.`, 'info');
+                showToast(`Hot Window manually ${isChecked ? 'OPENED' : 'CLOSED'}.`, 'info');
             } catch (err) {
                 showToast(err.message, 'error');
             }

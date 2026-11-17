@@ -197,6 +197,12 @@ const systemSettingSchema = new mongoose.Schema({
     verifiedPromotionalBudget: { type: Number, default: 5000 },
     businessRegistrationNo: { type: String, default: 'LTRIX-GLOBAL-RC-20268841' },
 
+    communityPopupEnabled: { type: Boolean, default: true },
+    whatsappEnabled: { type: Boolean, default: true },
+    whatsappLink: { type: String, default: 'https://chat.whatsapp.com/example' },
+    telegramEnabled: { type: Boolean, default: true },
+    telegramLink: { type: String, default: 'https://t.me/example' },
+
     usdtEnabled: { type: Boolean, default: true },
     usdtBep20Address: { type: String, default: '0x71C0000000000000000000000000000000008841' },
     usdtConfirmations: { type: Number, default: 12 },
@@ -418,6 +424,11 @@ async function ensureSystemSettings() {
             forceHotWindowOpen: false,
             verifiedPromotionalBudget: 5000,
             businessRegistrationNo: 'LTRIX-GLOBAL-RC-20268841',
+            communityPopupEnabled: true,
+            whatsappEnabled: true,
+            whatsappLink: 'https://chat.whatsapp.com/example',
+            telegramEnabled: true,
+            telegramLink: 'https://t.me/example',
             usdtEnabled: true,
             usdtBep20Address: '0x71C0000000000000000000000000000000008841',
             usdtConfirmations: 12,
@@ -463,6 +474,12 @@ async function ensureSystemSettings() {
             settings.nairaBankAccountName = primaryBank.accountName;
             modified = true;
         }
+
+        if (settings.communityPopupEnabled === undefined) { settings.communityPopupEnabled = true; modified = true; }
+        if (settings.whatsappEnabled === undefined) { settings.whatsappEnabled = true; modified = true; }
+        if (settings.telegramEnabled === undefined) { settings.telegramEnabled = true; modified = true; }
+        if (settings.whatsappLink === undefined) { settings.whatsappLink = 'https://chat.whatsapp.com/example'; modified = true; }
+        if (settings.telegramLink === undefined) { settings.telegramLink = 'https://t.me/example'; modified = true; }
 
         if (settings.nairaExchangeRate === undefined) { settings.nairaExchangeRate = 1500; modified = true; }
         if (settings.usdtBep20Address === undefined) { settings.usdtBep20Address = '0x71C0000000000000000000000000000000008841'; modified = true; }
@@ -946,6 +963,13 @@ app.get('/api/dashboard', auth, async (req, res) => {
                 nairaBankAccountNumber: primaryBank.accountNumber || settings.nairaBankAccountNumber || 'Unavailable',
                 nairaBankAccountName: primaryBank.accountName || settings.nairaBankAccountName || 'Unavailable'
             },
+            communitySettings: {
+                enabled: settings.communityPopupEnabled,
+                whatsappEnabled: settings.whatsappEnabled,
+                whatsappLink: settings.whatsappLink,
+                telegramEnabled: settings.telegramEnabled,
+                telegramLink: settings.telegramLink
+            },
             pendingUsdtDeposit,
             pendingNairaDeposit,
             standardPlans,
@@ -1305,7 +1329,6 @@ app.post('/api/wallet/naira-deposit-cancel', auth, async (req, res) => {
         );
         res.json({ success: true, message: 'Naira deposit request cancelled.' });
     } catch (err) {
-        // Corrected: added the missing colon after "error"
         res.status(500).json({ error: err.message });
     }
 });
@@ -1743,6 +1766,33 @@ app.get('/api/admin/overview', adminAuth, async (req, res) => {
     }
 });
 
+app.put('/api/admin/community-settings', adminAuth, async (req, res) => {
+    try {
+        const { communityPopupEnabled, whatsappEnabled, whatsappLink, telegramEnabled, telegramLink } = req.body;
+
+        const updated = await SystemSetting.findOneAndUpdate(
+            { key: 'GLOBAL_CONFIG' },
+            {
+                $set: {
+                    communityPopupEnabled: Boolean(communityPopupEnabled),
+                    whatsappEnabled: Boolean(whatsappEnabled),
+                    whatsappLink: String(whatsappLink || '').trim(),
+                    telegramEnabled: Boolean(telegramEnabled),
+                    telegramLink: String(telegramLink || '').trim()
+                }
+            },
+            { new: true, upsert: true }
+        );
+
+        res.json({
+            message: 'Community settings updated successfully!',
+            settings: updated
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.patch('/api/admin/users/:id/status', adminAuth, async (req, res) => {
     try {
         const { status } = req.body;
@@ -1914,7 +1964,7 @@ app.post('/api/admin/deposits/manual-credit', adminAuth, async (req, res) => {
         }
 
         const user = await User.findById(userId);
-        if (!user) return res.status(404).json({ error: 'Target user account not found.' });
+        if (!user) return res.status(404).json({ target: 'Target user account not found.' });
 
         const settings = await ensureSystemSettings();
         const cleanRef = txidOrReference && String(txidOrReference).trim()
