@@ -432,6 +432,15 @@
         let currentUserPage = 1;
         const USERS_PER_PAGE = 5;
 
+        function escapeHtml(str) {
+            return String(str ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
         // === CUSTOM NOTIFICATION SYSTEM ===
 
         function showToast(message, type = 'info') {
@@ -449,7 +458,7 @@
             toast.className = `pointer-events-auto flex items-start gap-3 p-4 rounded-xl shadow-2xl border ${bgColor} ${borderColor} ${textColor} w-80 max-w-[calc(100vw-2rem)] backdrop-blur-md toast-anim-enter`;
             toast.innerHTML = `
                 <span class="text-lg shrink-0">${icon}</span>
-                <div class="flex-1 leading-snug break-words text-sm font-medium">${message}</div>
+                <div class="flex-1 leading-snug break-words text-sm font-medium">${escapeHtml(message)}</div>
                 <button class="text-slate-400 hover:text-white shrink-0 mt-0.5 transition-colors" onclick="this.parentElement.remove()">✕</button>
             `;
 
@@ -617,13 +626,13 @@
                 document.getElementById('pending-deposits-list').innerHTML = data.deposits.filter(d => ['PENDING', 'PROCESSING'].includes(d.status)).map(d => `
                     <div class="bg-slate-950 p-3 rounded border border-slate-800 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
                         <div>
-                            <p class="font-bold text-white">${d.userId?.username || 'Unknown'} <span class="text-[10px] text-slate-500">(${d.reference})</span></p>
-                            <p class="text-slate-400 mt-0.5">${d.description}</p>
-                            <p class="text-amber-400 mt-1">Requested: $${d.amount.toFixed(2)} USD</p>
+                            <p class="font-bold text-white">${escapeHtml(d.userId?.username || 'Unknown')} <span class="text-[10px] text-slate-500">(${escapeHtml(d.reference)})</span></p>
+                            <p class="text-slate-400 mt-0.5">${escapeHtml(d.description)}</p>
+                            <p class="text-amber-400 mt-1">Requested: $${Number(d.amount || 0).toFixed(2)} USD</p>
                         </div>
                         <div class="flex flex-row sm:flex-col gap-1.5 shrink-0">
-                            <button onclick="processDeposit('${d._id}', 'APPROVE')" class="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold rounded">Approve</button>
-                            <button onclick="processDeposit('${d._id}', 'REJECT')" class="px-3 py-1 bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30 font-bold rounded">Reject</button>
+                            <button data-id="${escapeHtml(d._id)}" onclick="processDeposit(this.dataset.id, 'APPROVE')" class="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold rounded">Approve</button>
+                            <button data-id="${escapeHtml(d._id)}" onclick="processDeposit(this.dataset.id, 'REJECT')" class="px-3 py-1 bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30 font-bold rounded">Reject</button>
                         </div>
                     </div>
                 `).join('') || '<p class="text-slate-500 text-center py-2">No pending deposits.</p>';
@@ -632,13 +641,13 @@
                 document.getElementById('pending-withdrawals-list').innerHTML = data.pendingWithdrawals.map(w => `
                     <div class="bg-slate-950 p-3 rounded border border-slate-800 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
                         <div>
-                            <p class="font-bold text-white">${w.userId?.username || 'Unknown'} <span class="text-[10px] text-slate-500">(${w.reference})</span></p>
-                            <p class="text-slate-400 mt-0.5 text-[11px] break-all">To: ${w.withdrawalAddress || w.userId?.usdtWithdrawalAddress || 'N/A'}</p>
-                            <p class="text-white mt-1 font-mono text-xs">Amt: $${w.amount.toFixed(2)} | Net: ${(w.amount - w.fee).toFixed(2)} USDT</p>
+                            <p class="font-bold text-white">${escapeHtml(w.userId?.username || 'Unknown')} <span class="text-[10px] text-slate-500">(${escapeHtml(w.reference)})</span></p>
+                            <p class="text-slate-400 mt-0.5 text-[11px] break-all">To: ${escapeHtml(w.withdrawalAddress || w.userId?.usdtWithdrawalAddress || 'N/A')}</p>
+                            <p class="text-white mt-1 font-mono text-xs">Amt: $${Number(w.amount || 0).toFixed(2)} | Net: ${(Number(w.amount || 0) - Number(w.fee || 0)).toFixed(2)} USDT</p>
                         </div>
                         <div class="flex flex-row sm:flex-col gap-1.5 shrink-0">
-                            <button onclick="processWithdrawal('${w._id}', 'APPROVE')" class="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold rounded">Approve</button>
-                            <button onclick="processWithdrawal('${w._id}', 'REJECT')" class="px-3 py-1 bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30 font-bold rounded">Reject</button>
+                            <button data-id="${escapeHtml(w._id)}" onclick="processWithdrawal(this.dataset.id, 'APPROVE')" class="px-3 py-1 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold rounded">Approve</button>
+                            <button data-id="${escapeHtml(w._id)}" onclick="processWithdrawal(this.dataset.id, 'REJECT')" class="px-3 py-1 bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30 font-bold rounded">Reject</button>
                         </div>
                     </div>
                 `).join('') || '<p class="text-slate-500 text-center py-2">No pending withdrawals.</p>';
@@ -647,11 +656,11 @@
                 document.getElementById('admin-tickets-list').innerHTML = data.tickets.filter(t => t.status === 'OPEN').map(t => `
                     <div class="bg-slate-950 p-3 rounded border border-slate-800 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
                         <div>
-                            <p class="font-bold text-white">${t.subject} <span class="text-[10px] text-slate-500">(${t.ticketRef})</span></p>
-                            <p class="text-slate-400 mt-0.5">${t.message}</p>
-                            <p class="text-slate-500 mt-1 text-[10px]">${new Date(t.createdAt).toLocaleString()}</p>
+                            <p class="font-bold text-white">${escapeHtml(t.subject)} <span class="text-[10px] text-slate-500">(${escapeHtml(t.ticketRef)})</span></p>
+                            <p class="text-slate-400 mt-0.5">${escapeHtml(t.message)}</p>
+                            <p class="text-slate-500 mt-1 text-[10px]">${escapeHtml(new Date(t.createdAt).toLocaleString())}</p>
                         </div>
-                        <button onclick="replyTicket('${t._id}', '${t.ticketRef}')" class="px-3 py-1 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded shrink-0">Reply</button>
+                        <button data-id="${escapeHtml(t._id)}" data-ref="${escapeHtml(t.ticketRef)}" onclick="replyTicket(this.dataset.id, this.dataset.ref)" class="px-3 py-1 bg-purple-500 hover:bg-purple-600 text-white font-bold rounded shrink-0">Reply</button>
                     </div>
                 `).join('') || '<p class="text-slate-500 text-center py-2">No open tickets.</p>';
 
@@ -659,17 +668,17 @@
                 document.getElementById('admin-standard-packages-list').innerHTML = data.standardPlans.map(p => `
                     <div class="bg-slate-950 p-3 rounded border border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                         <div>
-                            <p class="font-bold text-white text-xs">$${p.price} Package</p>
-                            <p class="text-slate-400 text-[11px]">Daily: $${p.dailyIncome} | ${p.durationDays} Days</p>
-                            <p class="text-amber-400 mt-1 text-[10px]">Limit: ${p.purchaseLimit} per user</p>
+                            <p class="font-bold text-white text-xs">$${Number(p.price)} Package</p>
+                            <p class="text-slate-400 text-[11px]">Daily: $${Number(p.dailyIncome)} | ${Number(p.durationDays)} Days</p>
+                            <p class="text-amber-400 mt-1 text-[10px]">Limit: ${Number(p.purchaseLimit)} per user</p>
                         </div>
                         <div class="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
                             <span class="${p.isLocked ? 'text-rose-400 font-bold' : 'text-emerald-400 font-bold'} text-xs">${p.isLocked ? 'Locked' : 'Unlocked'}</span>
                             <div class="flex gap-1">
-                                <button onclick="togglePackageLock('${p._id}', ${p.isLocked})" class="px-2.5 py-1.5 ${p.isLocked ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30'} rounded text-[10px] font-bold transition-colors">
+                                <button data-id="${escapeHtml(p._id)}" onclick="togglePackageLock(this.dataset.id, ${Boolean(p.isLocked)})" class="px-2.5 py-1.5 ${p.isLocked ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30'} rounded text-[10px] font-bold transition-colors">
                                     ${p.isLocked ? 'Unlock' : 'Lock'}
                                 </button>
-                                <button onclick="editPackageLimit('${p._id}', ${p.purchaseLimit})" class="px-2.5 py-1.5 bg-slate-800 text-slate-300 hover:bg-slate-700 rounded text-[10px] border border-slate-700 transition-colors">Edit Limit</button>
+                                <button data-id="${escapeHtml(p._id)}" onclick="editPackageLimit(this.dataset.id, ${Number(p.purchaseLimit)})" class="px-2.5 py-1.5 bg-slate-800 text-slate-300 hover:bg-slate-700 rounded text-[10px] border border-slate-700 transition-colors">Edit Limit</button>
                             </div>
                         </div>
                     </div>
@@ -679,21 +688,21 @@
                 document.getElementById('admin-hot-packages-list').innerHTML = data.hotPlans.map(p => `
                     <div class="bg-slate-950 p-3 rounded border border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                         <div>
-                            <p class="font-bold text-white text-xs">$${p.price} Package</p>
-                            <p class="text-slate-400 text-[11px]">Daily: $${p.dailyIncome} | ${p.durationDays} Days</p>
-                            <p class="text-amber-400 mt-1 text-[10px]">Limit: ${p.purchaseLimit} per user</p>
-                            <p class="text-sky-400 mt-0.5 text-[10px]">Slots: ${p.slotsClaimed} / ${p.totalSlots}</p>
+                            <p class="font-bold text-white text-xs">$${Number(p.price)} Package</p>
+                            <p class="text-slate-400 text-[11px]">Daily: $${Number(p.dailyIncome)} | ${Number(p.durationDays)} Days</p>
+                            <p class="text-amber-400 mt-1 text-[10px]">Limit: ${Number(p.purchaseLimit)} per user</p>
+                            <p class="text-sky-400 mt-0.5 text-[10px]">Slots: ${Number(p.slotsClaimed)} / ${Number(p.totalSlots)}</p>
                         </div>
                         <div class="flex flex-col gap-1.5 w-full sm:w-auto">
                             <div class="flex items-center justify-between sm:justify-end gap-2">
                                 <span class="${p.isLocked ? 'text-rose-400 font-bold' : 'text-emerald-400 font-bold'} text-xs">${p.isLocked ? 'Locked' : 'Unlocked'}</span>
-                                <button onclick="togglePackageLock('${p._id}', ${p.isLocked})" class="px-2.5 py-1 ${p.isLocked ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30'} rounded text-[10px] font-bold transition-colors">
+                                <button data-id="${escapeHtml(p._id)}" onclick="togglePackageLock(this.dataset.id, ${Boolean(p.isLocked)})" class="px-2.5 py-1 ${p.isLocked ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30 hover:bg-rose-500/30'} rounded text-[10px] font-bold transition-colors">
                                     ${p.isLocked ? 'Unlock' : 'Lock'}
                                 </button>
                             </div>
                             <div class="flex gap-1 mt-1">
-                                <button onclick="editHotPackage('${p._id}', ${p.purchaseLimit}, ${p.totalSlots})" class="flex-1 px-2 py-1 bg-slate-800 text-slate-300 hover:bg-slate-700 rounded text-[10px] border border-slate-700 transition-colors">Edit</button>
-                                <button onclick="resetPackageSlots('${p._id}')" class="flex-1 px-2 py-1 bg-orange-500/20 text-orange-300 border border-orange-500/30 hover:bg-orange-500/30 rounded text-[10px] transition-colors">Reset Slots</button>
+                                <button data-id="${escapeHtml(p._id)}" onclick="editHotPackage(this.dataset.id, ${Number(p.purchaseLimit)}, ${Number(p.totalSlots)})" class="flex-1 px-2 py-1 bg-slate-800 text-slate-300 hover:bg-slate-700 rounded text-[10px] border border-slate-700 transition-colors">Edit</button>
+                                <button data-id="${escapeHtml(p._id)}" onclick="resetPackageSlots(this.dataset.id)" class="flex-1 px-2 py-1 bg-orange-500/20 text-orange-300 border border-orange-500/30 hover:bg-orange-500/30 rounded text-[10px] transition-colors">Reset Slots</button>
                             </div>
                         </div>
                     </div>
@@ -731,28 +740,28 @@
                 return `
                     <div class="bg-slate-950 p-3 rounded border border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                         <div>
-                            <p class="font-bold text-white text-xs">${u.username} <span class="text-[10px] text-slate-500">(${u.email}) • Bal: $${(u.availableBalance || 0).toFixed(2)}</span></p>
-                            <p class="text-[10px] mt-0.5">Role: <strong class="${isSuper ? 'text-purple-400' : (u.role === 'ADMIN' ? 'text-emerald-400' : 'text-slate-300')}">${u.role}</strong></p>
-                            <p class="text-[10px]">Status: <strong class="${u.status === 'ACTIVE' ? 'text-emerald-400' : (u.status === 'SUSPENDED' ? 'text-amber-400' : 'text-rose-400')}">${u.status === 'LOCKED' ? 'LOCKED (W/D)' : u.status}</strong></p>
+                            <p class="font-bold text-white text-xs">${escapeHtml(u.username)} <span class="text-[10px] text-slate-500">(${escapeHtml(u.email)}) • Bal: $${(u.availableBalance || 0).toFixed(2)}</span></p>
+                            <p class="text-[10px] mt-0.5">Role: <strong class="${isSuper ? 'text-purple-400' : (u.role === 'ADMIN' ? 'text-emerald-400' : 'text-slate-300')}">${escapeHtml(u.role)}</strong></p>
+                            <p class="text-[10px]">Status: <strong class="${u.status === 'ACTIVE' ? 'text-emerald-400' : (u.status === 'SUSPENDED' ? 'text-amber-400' : 'text-rose-400')}">${u.status === 'LOCKED' ? 'LOCKED (W/D)' : escapeHtml(u.status)}</strong></p>
                         </div>
                         <div class="flex flex-wrap gap-1.5 w-full sm:w-auto justify-start sm:justify-end">
                             ${!isSuper ? `
-                                <button onclick="rewardUser('${u._id}', '${u.username}')" class="px-2 py-1 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 transition-colors">
+                                <button data-id="${escapeHtml(u._id)}" data-username="${escapeHtml(u.username)}" onclick="rewardUser(this.dataset.id, this.dataset.username)" class="px-2 py-1 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 transition-colors">
                                     + Reward
                                 </button>
-                                <button onclick="updateUserStatus('${u._id}', '${u.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE'}')" class="px-2 py-1 rounded text-[10px] font-bold ${u.status === 'ACTIVE' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30'} transition-colors">
+                                <button data-id="${escapeHtml(u._id)}" onclick="updateUserStatus(this.dataset.id, '${u.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE'}')" class="px-2 py-1 rounded text-[10px] font-bold ${u.status === 'ACTIVE' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30'} transition-colors">
                                     ${u.status === 'ACTIVE' ? 'Suspend' : 'Activate'}
                                 </button>
-                                <button onclick="updateUserStatus('${u._id}', '${u.status === 'LOCKED' ? 'ACTIVE' : 'LOCKED'}')" class="px-2 py-1 rounded text-[10px] font-bold ${u.status === 'LOCKED' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30' : 'bg-slate-500/20 text-slate-300 border border-slate-500/30 hover:bg-slate-500/30'} transition-colors">
+                                <button data-id="${escapeHtml(u._id)}" onclick="updateUserStatus(this.dataset.id, '${u.status === 'LOCKED' ? 'ACTIVE' : 'LOCKED'}')" class="px-2 py-1 rounded text-[10px] font-bold ${u.status === 'LOCKED' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30' : 'bg-slate-500/20 text-slate-300 border border-slate-500/30 hover:bg-slate-500/30'} transition-colors">
                                     ${u.status === 'LOCKED' ? 'Unlock W/D' : 'Lock W/D'}
                                 </button>
-                                <button onclick="deleteUser('${u._id}', '${u.username}')" class="px-2 py-1 rounded text-[10px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30 transition-colors">
+                                <button data-id="${escapeHtml(u._id)}" data-username="${escapeHtml(u.username)}" onclick="deleteUser(this.dataset.id, this.dataset.username)" class="px-2 py-1 rounded text-[10px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30 transition-colors">
                                     Delete
                                 </button>
                             ` : '<span class="text-[10px] text-purple-400 italic">Protected Account</span>'}
                             
                             ${currentAdminRole === 'SUPERADMIN' && !isSuper ? `
-                                <button onclick="updateUserRole('${u._id}', '${u.role === 'ADMIN' ? 'USER' : 'ADMIN'}')" class="px-2 py-1 rounded text-[10px] font-bold bg-sky-500/20 text-sky-400 border border-sky-500/30 hover:bg-sky-500/30 transition-colors">
+                                <button data-id="${escapeHtml(u._id)}" onclick="updateUserRole(this.dataset.id, '${u.role === 'ADMIN' ? 'USER' : 'ADMIN'}')" class="px-2 py-1 rounded text-[10px] font-bold bg-sky-500/20 text-sky-400 border border-sky-500/30 hover:bg-sky-500/30 transition-colors">
                                     ${u.role === 'ADMIN' ? 'Demote to User' : 'Promote to Admin'}
                                 </button>
                             ` : ''}
@@ -817,17 +826,17 @@
                 <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label class="block text-[10px] text-slate-400 mb-1">Bank Name</label>
-                        <input type="text" class="bank-name w-full p-2 rounded bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none" value="${acc.bankName}" required />
+                        <input type="text" class="bank-name w-full p-2 rounded bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none" value="${escapeHtml(acc.bankName)}" required />
                     </div>
                     <div>
                         <label class="block text-[10px] text-slate-400 mb-1">Account Number</label>
-                        <input type="text" class="bank-acc w-full p-2 rounded bg-slate-900 border border-slate-700 text-white text-xs font-mono focus:outline-none" value="${acc.accountNumber}" required />
+                        <input type="text" class="bank-acc w-full p-2 rounded bg-slate-900 border border-slate-700 text-white text-xs font-mono focus:outline-none" value="${escapeHtml(acc.accountNumber)}" required />
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-2 items-center">
                     <div>
                         <label class="block text-[10px] text-slate-400 mb-1">Account Name</label>
-                        <input type="text" class="bank-name-acc w-full p-2 rounded bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none" value="${acc.accountName}" required />
+                        <input type="text" class="bank-name-acc w-full p-2 rounded bg-slate-900 border border-slate-700 text-white text-xs focus:outline-none" value="${escapeHtml(acc.accountName)}" required />
                     </div>
                     <div class="flex items-center gap-2 mt-4">
                         <input type="checkbox" class="bank-active w-4 h-4 rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-emerald-500" ${acc.isActive ? 'checked' : ''} />
@@ -1018,7 +1027,7 @@
         }
 
         async function deleteUser(userId, username) {
-            const proceed = await customConfirm('Delete User', `<span class="text-rose-400 font-bold">WARNING:</span> Are you sure you want to permanently delete <strong>${username}</strong> and all associated data? This cannot be undone.`);
+            const proceed = await customConfirm('Delete User', `<span class="text-rose-400 font-bold">WARNING:</span> Are you sure you want to permanently delete <strong>${escapeHtml(username)}</strong> and all associated data? This cannot be undone.`);
             if (!proceed) return;
             try {
                 const data = await apiCall(`/api/admin/users/${userId}`, 'DELETE');
@@ -1030,7 +1039,7 @@
         }
 
         async function updateUserRole(userId, newRole) {
-            const proceed = await customConfirm('Change Role', `Change this user's role to <strong>${newRole}</strong>?`);
+            const proceed = await customConfirm('Change Role', `Change this user's role to <strong>${escapeHtml(newRole)}</strong>?`);
             if (!proceed) return;
             try {
                 const data = await apiCall(`/api/admin/users/${userId}/role`, 'PATCH', { role: newRole });
@@ -1055,9 +1064,9 @@
                 }
 
                 resDiv.innerHTML = data.users.map(u => `
-                    <button onclick="selectUser('${u._id}', '${u.username}', '${u.email}', ${u.availableBalance})" class="w-full text-left p-2 bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 transition-colors">
-                        <p class="text-xs font-bold text-white">${u.username}</p>
-                        <p class="text-[10px] text-slate-400">${u.email} • Bal: $${u.availableBalance.toFixed(2)}</p>
+                    <button data-id="${escapeHtml(u._id)}" data-username="${escapeHtml(u.username)}" data-email="${escapeHtml(u.email)}" data-balance="${Number(u.availableBalance || 0)}" onclick="selectUser(this.dataset.id, this.dataset.username, this.dataset.email, Number(this.dataset.balance))" class="w-full text-left p-2 bg-slate-800 hover:bg-slate-700 rounded border border-slate-700 transition-colors">
+                        <p class="text-xs font-bold text-white">${escapeHtml(u.username)}</p>
+                        <p class="text-[10px] text-slate-400">${escapeHtml(u.email)} • Bal: $${Number(u.availableBalance || 0).toFixed(2)}</p>
                     </button>
                 `).join('');
             } catch (err) {
@@ -1069,7 +1078,7 @@
             activeUserId = id;
             document.getElementById('credit-user-id').value = id;
             document.getElementById('selected-user-display').innerText = `${username} (${email})`;
-            document.getElementById('selected-user-balance').innerText = `$${balance.toFixed(2)}`;
+            document.getElementById('selected-user-balance').innerText = `$${Number(balance || 0).toFixed(2)}`;
             document.getElementById('user-search-results').innerHTML = '';
         }
 
@@ -1089,11 +1098,11 @@
                 <div class="space-y-2">
                     <p class="text-amber-400 font-bold">CONFIRM MANUAL DEPOSIT CREDIT:</p>
                     <ul class="list-disc pl-5">
-                        <li><strong>Member:</strong> ${username}</li>
-                        <li><strong>Current Balance:</strong> ${currentBal}</li>
-                        <li><strong>Amount Received:</strong> ${amount} ${currency === 'NGN' ? 'NGN (Bank)' : 'USDT (Crypto)'}</li>
-                        <li><strong>TXID / Ref:</strong> ${txid || 'Auto-generated'}</li>
-                        <li><strong>Audit Note:</strong> ${note}</li>
+                        <li><strong>Member:</strong> ${escapeHtml(username)}</li>
+                        <li><strong>Current Balance:</strong> ${escapeHtml(currentBal)}</li>
+                        <li><strong>Amount Received:</strong> ${escapeHtml(amount)} ${currency === 'NGN' ? 'NGN (Bank)' : 'USDT (Crypto)'}</li>
+                        <li><strong>TXID / Ref:</strong> ${escapeHtml(txid || 'Auto-generated')}</li>
+                        <li><strong>Audit Note:</strong> ${escapeHtml(note)}</li>
                     </ul>
                     <p class="mt-4 font-bold text-white">Proceed with immediate wallet credit?</p>
                 </div>

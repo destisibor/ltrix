@@ -619,13 +619,25 @@ app.post('/api/auth/register', async (req, res) => {
             return res.status(400).json({ error: 'Username, email, and password are required' });
         }
 
+        const cleanUsername = String(username).trim();
+        if (!/^[a-zA-Z0-9_-]{3,20}$/.test(cleanUsername)) {
+            return res.status(400).json({
+                error: 'Username must be 3-20 characters and contain only letters, numbers, underscores, or hyphens.'
+            });
+        }
+
+        const cleanEmail = String(email).toLowerCase().trim();
+        if (!/^[^\s@<>'"]+@[^\s@<>'"]+\.[^\s@<>'"]+$/.test(cleanEmail)) {
+            return res.status(400).json({ error: 'Please provide a valid email address.' });
+        }
+
         const expectedAdmin = (process.env.ADMIN_PHONE || 'classic84').toLowerCase();
-        if (username.toLowerCase() === expectedAdmin || email.toLowerCase() === expectedAdmin) {
+        if (cleanUsername.toLowerCase() === expectedAdmin || cleanEmail === expectedAdmin) {
             return res.status(400).json({ error: 'This identifier is reserved' });
         }
 
         const existing = await User.findOne({
-            $or: [{ email: email.toLowerCase() }, { username: username.trim() }]
+            $or: [{ email: cleanEmail }, { username: cleanUsername }]
         });
         if (existing) return res.status(400).json({ error: 'Username or email already in use' });
 
@@ -635,13 +647,13 @@ app.post('/api/auth/register', async (req, res) => {
         }
 
         const passwordHash = await bcrypt.hash(password, 10);
-        const cleanUser = username.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5);
+        const cleanUser = cleanUsername.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5);
         const myRefCode = `LTRIX-${cleanUser}${Math.floor(100 + Math.random() * 900)}`;
 
         const user = await User.create({
-            username: username.trim(),
-            email: email.toLowerCase().trim(),
-            phone: phone || '',
+            username: cleanUsername,
+            email: cleanEmail,
+            phone: phone ? String(phone).trim() : '',
             passwordHash,
             referralCode: myRefCode,
             referredBy: referrer ? referrer._id : null,
